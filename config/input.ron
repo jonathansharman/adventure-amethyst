@@ -1,19 +1,11 @@
 (
-    axes: {
-        "move_x": Emulated(
-            pos: Key(D),
-            neg: Key(A),
-        ),
-        "move_y": Emulated(
-            pos: Key(E),
-            neg: Key(Q),
-        ),
-        "move_z": Emulated(
-            pos: Key(S),
-            neg: Key(W),
-        ),
-    },
-    actions: {
-
-    },
+	axes: {},
+	actions: {
+		Up: [[Key(Up)]],
+		Down: [[Key(Down)]],
+		Left: [[Key(Left)]],
+		Right: [[Key(Right)]],
+		Primary: [[Key(X)]],
+		Secondary: [[Key(Z)]],
+	},
 )
