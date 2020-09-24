@@ -16,11 +16,11 @@ use log::info;
 
 use std::convert::TryFrom;
 
-/// Reads player input and updates the game state accordingly.
+/// Controls the hero character based on player input.
 #[derive(SystemDesc)]
-pub struct Control;
+pub struct HeroControl;
 
-impl<'a> System<'a> for Control {
+impl<'a> System<'a> for HeroControl {
 	type SystemData = (
 		Read<'a, InputHandler<InputBindings>>,
 		ReadStorage<'a, Hero>,
@@ -29,10 +29,10 @@ impl<'a> System<'a> for Control {
 		WriteStorage<'a, SpriteRender>,
 	);
 
-	fn run(&mut self, (input, hero, mut direction, mut transform, mut sprite): Self::SystemData) {
+	fn run(&mut self, (input, heroes, mut directions, mut transforms, mut sprites): Self::SystemData) {
 		const ORTHOGONAL_SPEED: f32 = 5.0;
 		const DIAGONAL_SPEED: f32 = 0.70710678118 * 5.0;
-		for (_, direction, transform, sprite) in (&hero, &mut direction, &mut transform, &mut sprite).join() {
+		for (_, direction, transform, sprite) in (&heroes, &mut directions, &mut transforms, &mut sprites).join() {
 			// Move.
 			let mut vx: i16 = 0;
 			let mut vy: i16 = 0;

@@ -6,7 +6,10 @@ use amethyst::{
 	window::ScreenDimensions,
 };
 
-use super::*;
+use crate::{
+	resource,
+	state::Playing,
+};
 
 /// Loads some data/resources and switches to `Playing`.
 #[derive(Default)]
@@ -16,8 +19,9 @@ impl SimpleState for Loading {
 	fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
 		let dimensions = (*data.world.read_resource::<ScreenDimensions>()).clone();
 
-		let camera = init_camera(data.world, &dimensions);
-		Trans::Switch(Box::new(Playing { camera }))
+		let camera_entity = init_camera(data.world, &dimensions);
+		data.world.insert(resource::Camera { entity: Some(camera_entity) });
+		Trans::Switch(Box::new(Playing))
 	}
 }
 

@@ -43,7 +43,8 @@ fn main() -> amethyst::Result<()> {
 			.with_plugin(RenderFlat2D::default()),
 		)?
 		// Systems
-		.with(system::Control, "control_system", &["input_system"]);
+		.with(system::HeroControl, "hero_control", &["input_system"])
+		.with(system::CameraControl, "camera_control", &[]);
 
 	Application::new(resources, state::Loading, game_data)?.run();
 

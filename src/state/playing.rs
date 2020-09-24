@@ -10,7 +10,6 @@ use crate::{
 use amethyst::{
 	assets::{AssetStorage, Loader},
 	core::transform::Transform,
-	ecs::prelude::Entity,
 	input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
 	prelude::*,
 	renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
@@ -18,9 +17,7 @@ use amethyst::{
 };
 
 /// The main gameplay state.
-pub struct Playing {
-	pub camera: Entity,
-}
+pub struct Playing;
 
 impl SimpleState for Playing {
 	fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
