@@ -14,6 +14,8 @@ use amethyst::{
 
 use log::info;
 
+use std::convert::TryFrom;
+
 /// Reads player input and updates the game state accordingly.
 #[derive(SystemDesc)]
 pub struct Control;
@@ -28,12 +30,12 @@ impl<'a> System<'a> for Control {
 	);
 
 	fn run(&mut self, (input, hero, mut direction, mut transform, mut sprite): Self::SystemData) {
-		const ORTHOGONAL_SPEED: f32 = 7.0;
-		const DIAGONAL_SPEED: f32 = 4.94974746831;
+		const ORTHOGONAL_SPEED: f32 = 5.0;
+		const DIAGONAL_SPEED: f32 = 0.70710678118 * 5.0;
 		for (_, direction, transform, sprite) in (&hero, &mut direction, &mut transform, &mut sprite).join() {
 			// Move.
-			let mut vx = 0;
-			let mut vy = 0;
+			let mut vx: i16 = 0;
+			let mut vy: i16 = 0;
 			if input.action_is_down(&Actions::Up).unwrap() {
 				vy -= 1;
 			}
@@ -68,11 +70,11 @@ impl<'a> System<'a> for Control {
 			}
 			// Update translation.
 			if vx == 0 || vy == 0 {
-				transform.move_right(vx as f32 * ORTHOGONAL_SPEED);
-				transform.move_down(vy as f32 * ORTHOGONAL_SPEED);
+				transform.move_right(f32::try_from(vx).unwrap() * ORTHOGONAL_SPEED);
+				transform.move_down(f32::try_from(vy).unwrap() * ORTHOGONAL_SPEED);
 			} else {
-				transform.move_right(vx as f32 * DIAGONAL_SPEED);
-				transform.move_down(vy as f32 * DIAGONAL_SPEED);
+				transform.move_right(f32::try_from(vx).unwrap() * DIAGONAL_SPEED);
+				transform.move_down(f32::try_from(vy).unwrap() * DIAGONAL_SPEED);
 			}
 
 			// Attack.

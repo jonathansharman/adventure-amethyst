@@ -27,7 +27,7 @@ impl SimpleState for Loading {
 /// of the screen, as well as make it cover the entire screen.
 fn init_camera(world: &mut World, dimensions: &ScreenDimensions) -> Entity {
 	let mut transform = Transform::default();
-	transform.set_translation_xyz(0.5 * dimensions.width(), 0.5 * dimensions.height(), 1.0);
+	transform.set_translation_xyz(0.0, 0.0, 1.0);
 
 	world
 		.create_entity()

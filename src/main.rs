@@ -13,6 +13,7 @@ use amethyst::{
 
 mod component;
 mod input_bindings;
+mod resource;
 mod state;
 mod system;
 
