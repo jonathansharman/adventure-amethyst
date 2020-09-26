@@ -34,7 +34,7 @@ impl SimpleState for Playing {
 
 		// Create player character.
 		let mut hero_transform = Transform::default();
-		hero_transform.set_translation_xyz(TILE_SIZE, TILE_SIZE, 0.5);
+		hero_transform.set_translation_xyz(TILE_SIZE, -TILE_SIZE, 0.5);
 		let hero_sprite = load_hero_sprite(world);
 		world
 			.create_entity()
@@ -46,7 +46,7 @@ impl SimpleState for Playing {
 			.build();
 
 		// Add region.
-		let region = Region::new(world, 11, 11);
+		let region = Region::load(world, "test.ron");
 		world.insert(region);
 
 		add_camera(world);

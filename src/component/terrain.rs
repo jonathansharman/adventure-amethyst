@@ -1,6 +1,7 @@
 use amethyst::ecs::{Component, DenseVecStorage};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)]
 #[repr(u32)]
 pub enum Terrain {
 	Floor,

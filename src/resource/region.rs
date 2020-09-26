@@ -10,6 +10,10 @@ use amethyst::{
 	prelude::*,
 	renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 };
+use ron::de::from_reader;
+use serde::Deserialize;
+
+use std::fs::File;
 
 pub struct Region {
 	row_count: usize,
@@ -17,8 +21,21 @@ pub struct Region {
 	tiles: Vec<Entity>,
 }
 
+/// Intermediary type for reading region data from a file.
+#[derive(Deserialize)]
+struct RegionData {
+	col_count: usize,
+	terrain: Vec<Terrain>,
+}
+
 impl Region {
-	pub fn new(world: &mut World, row_count: usize, col_count: usize) -> Region {
+	/// Loads a region from `filename` within the `assets/regions` directory.
+	pub fn load(world: &mut World, filename: &str) -> Region {
+		// Load region data from file.
+		let path = format!("assets/regions/{}", filename);
+		let file = File::open(&path).expect("Could not open region file.");
+		let region_data: RegionData = from_reader(file).unwrap();
+		// Set up terrain texture and sprite sheet.
 		let texture_handle;
 		let sheet_handle;
 		{
@@ -36,37 +53,36 @@ impl Region {
 				&world.read_resource::<AssetStorage<SpriteSheet>>(),
 			);
 		}
-
+		// Generate tiles from terrain data.
 		let mut tiles: Vec<Entity> = Vec::new();
-		for row in 0..row_count {
-			for col in 0..col_count {
-				let terrain;
-				let mut transform = Transform::default();
-				transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * TILE_SIZE, 0.0);
-				let sprite;
-				let is_edge = row == 0 || row == row_count - 1 || col == 0 || col == col_count - 1;
-				let is_center = row == row_count / 2 && col == col_count / 2;
-				if is_edge || is_center {
-					terrain = Terrain::Wall;
-					sprite = SpriteRender {
-						sprite_sheet: sheet_handle.clone(),
-						sprite_number: 1,
-					};
-				} else {
-					terrain = Terrain::Floor;
-					sprite = SpriteRender {
-						sprite_sheet: sheet_handle.clone(),
-						sprite_number: 0,
-					};
-				}
-				let tile = world
-					.create_entity()
-					.with(terrain)
-					.with(transform)
-					.with(sprite)
-					.build();
-				tiles.push(tile);
-			}
+		let row_count = region_data.terrain.len() / region_data.col_count;
+		let col_count = region_data.col_count;
+		for (i, terrain) in region_data.terrain.into_iter().enumerate() {
+			// Compute row/column indices.
+			let row = i / col_count;
+			let col = i % col_count;
+			// Set transform.
+			let mut transform = Transform::default();
+			transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * -TILE_SIZE, 0.0);
+			// Set sprite based on terrain.
+			let sprite = match terrain {
+				Terrain::Floor => SpriteRender {
+					sprite_sheet: sheet_handle.clone(),
+					sprite_number: 0,
+				},
+				Terrain::Wall => SpriteRender {
+					sprite_sheet: sheet_handle.clone(),
+					sprite_number: 1,
+				},
+			};
+			// Add the tile to the world and the region's tile list.
+			let tile = world
+				.create_entity()
+				.with(terrain)
+				.with(transform)
+				.with(sprite)
+				.build();
+			tiles.push(tile);
 		}
 		Region {
 			row_count,
@@ -91,10 +107,10 @@ impl Region {
 
 	/// Gets the terrain at the given (`x`, `y`) coordinates, if any.
 	pub fn terrain_at_x_y(&self, terrains: &ReadStorage<Terrain>, x: f32, y: f32) -> Option<Terrain> {
-		if x < 0.0 || y < 0.0 {
+		if x < 0.0 || y > 0.0 {
 			None
 		} else {
-			self.terrain_at_row_col(terrains, (y / TILE_SIZE) as usize, (x / TILE_SIZE) as usize)
+			self.terrain_at_row_col(terrains, (y / -TILE_SIZE) as usize, (x / TILE_SIZE) as usize)
 		}
 	}
 }
