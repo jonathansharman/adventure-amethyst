@@ -1,10 +1,15 @@
 use crate::{
 	component::{
+		Collider,
 		Direction,
 		Hero,
 		Terrain,
 	},
-	resource::Region,
+	constants::*,
+	resource::{
+		Camera,
+		Region,
+	},
 };
 
 use amethyst::{
@@ -12,8 +17,9 @@ use amethyst::{
 	core::transform::Transform,
 	input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
 	prelude::*,
-	renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+	renderer::{Camera as AmethystCamera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 	ui::{Anchor, FontHandle, LineMode, TtfFormat, UiImage, UiText, UiTransform},
+	window::ScreenDimensions,
 };
 
 /// The main gameplay state.
@@ -28,19 +34,22 @@ impl SimpleState for Playing {
 
 		// Create player character.
 		let mut hero_transform = Transform::default();
-		hero_transform.set_translation_xyz(0.0, 0.0, 0.5);
+		hero_transform.set_translation_xyz(TILE_SIZE, TILE_SIZE, 0.5);
 		let hero_sprite = load_hero_sprite(world);
 		world
 			.create_entity()
 			.with(Hero)
 			.with(Direction::Down)
+			.with(Collider)
 			.with(hero_transform)
 			.with(hero_sprite)
 			.build();
 
 		// Add region.
-		let region = Region::new(world, 10, 10);
+		let region = Region::new(world, 11, 11);
 		world.insert(region);
+
+		add_camera(world);
 
 		create_ui_example(world);
 	}
@@ -90,8 +99,21 @@ fn load_hero_sprite(world: &mut World) -> SpriteRender {
 	}
 }
 
+/// Adds the camera resource.
+fn add_camera(world: &mut World) {
+	let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
+	let mut transform = Transform::default();
+	transform.set_translation_xyz(0.0, 0.0, 1.0);
+	let camera_entity = world
+		.create_entity()
+		.with(AmethystCamera::standard_2d(dimensions.width(), dimensions.height()))
+		.with(transform)
+		.build();
+	world.insert(Camera { entity: camera_entity });
+}
+
 /// Creates a simple UI background and a UI text label.
-pub fn create_ui_example(world: &mut World) {
+fn create_ui_example(world: &mut World) {
 	// Create background UI element.
 	world
 		.create_entity()

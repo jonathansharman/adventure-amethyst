@@ -1,4 +1,7 @@
-use crate::component::Terrain;
+use crate::{
+	component::Terrain,
+	constants::*,
+};
 
 use amethyst::{
 	assets::{AssetStorage, Loader},
@@ -39,9 +42,11 @@ impl Region {
 			for col in 0..col_count {
 				let terrain;
 				let mut transform = Transform::default();
-				transform.set_translation_xyz(col as f32 * 40.0, row as f32 * 40.0, 0.0);
+				transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * TILE_SIZE, 0.0);
 				let sprite;
-				if row == 0 || row == row_count - 1 || col == 0 || col == col_count - 1 {
+				let is_edge = row == 0 || row == row_count - 1 || col == 0 || col == col_count - 1;
+				let is_center = row == row_count / 2 && col == col_count / 2;
+				if is_edge || is_center {
 					terrain = Terrain::Wall;
 					sprite = SpriteRender {
 						sprite_sheet: sheet_handle.clone(),
@@ -70,11 +75,26 @@ impl Region {
 		}
 	}
 
-	pub fn terrain_at(&self, terrains: ReadStorage<Terrain>, row: usize, col: usize) -> Option<Terrain> {
-		if row * self.col_count + col < self.row_count * self.col_count + self.col_count {
-			terrains.get(self.tiles[row * self.col_count + col]).map(|terrain| *terrain)
-		} else {
+	/// Gets the terrain at the given `row` and `col`, if any.
+	pub fn terrain_at_row_col(&self, terrains: &ReadStorage<Terrain>, row: usize, col: usize) -> Option<Terrain> {
+		// Ensure coordinates are in bounds.
+		if row >= self.row_count || col >= self.col_count {
+			return None;
+		}
+		// Compute index.
+		let index = row * self.col_count + col;
+		// Get terrain.
+		self.tiles.get(index).and_then(|tile| {
+			terrains.get(*tile).map(|terrain| *terrain)
+		})
+	}
+
+	/// Gets the terrain at the given (`x`, `y`) coordinates, if any.
+	pub fn terrain_at_x_y(&self, terrains: &ReadStorage<Terrain>, x: f32, y: f32) -> Option<Terrain> {
+		if x < 0.0 || y < 0.0 {
 			None
+		} else {
+			self.terrain_at_row_col(terrains, (y / TILE_SIZE) as usize, (x / TILE_SIZE) as usize)
 		}
 	}
 }

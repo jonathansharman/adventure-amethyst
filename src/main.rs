@@ -12,6 +12,7 @@ use amethyst::{
 };
 
 mod component;
+mod constants;
 mod input_bindings;
 mod resource;
 mod state;
@@ -44,9 +45,10 @@ fn main() -> amethyst::Result<()> {
 		)?
 		// Systems
 		.with(system::HeroControl, "hero_control", &["input_system"])
+		.with(system::Collision, "collision", &[])
 		.with(system::CameraControl, "camera_control", &[]);
 
-	Application::new(resources, state::Loading, game_data)?.run();
+	Application::new(resources, state::Playing, game_data)?.run();
 
 	Ok(())
 }

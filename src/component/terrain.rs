@@ -1,6 +1,6 @@
 use amethyst::ecs::{Component, DenseVecStorage};
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum Terrain {
 	Floor,
