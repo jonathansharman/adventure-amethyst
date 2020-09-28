@@ -45,8 +45,13 @@ fn main() -> amethyst::Result<()> {
 		)?
 		// Systems
 		.with(system::HeroControl, "hero_control", &["input_system"])
+		.with_barrier()
 		.with(system::Collision, "collision", &[])
-		.with(system::CameraControl, "camera_control", &[]);
+		.with_barrier()
+		.with(system::Animation, "animation", &[])
+		.with_barrier()
+		.with(system::CameraControl, "camera_control", &[])
+		;
 
 	Application::new(resources, state::Playing, game_data)?.run();
 

@@ -5,12 +5,24 @@ RegionData(
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,  Floor, Wall,
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
-		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
+		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,  Wall,  Wall,
 		Wall, Floor, Floor, Floor, Floor, Wall,  Floor, Floor, Floor, Floor, Wall,
-		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
+		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,  Wall,  Wall,
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,
 		Wall, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Floor, Wall,  Wall,
 		Wall, Wall,  Wall,  Wall,  Wall,  Wall,  Wall,  Wall,  Wall,  Wall,  Wall,
+	],
+	entrances: [
+		Entrance(
+			row: 1,
+			col: 1,
+			direction: Right,
+		),
+		Entrance(
+			row: 9,
+			col: 8,
+			direction: Left,
+		)
 	],
 )

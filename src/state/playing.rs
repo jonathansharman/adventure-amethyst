@@ -3,6 +3,7 @@ use crate::{
 		Collider,
 		Direction,
 		Hero,
+		Position,
 		Terrain,
 	},
 	constants::*,
@@ -32,21 +33,30 @@ impl SimpleState for Playing {
 		// Register required components.
 		world.register::<Terrain>();
 
-		// Create player character.
-		let mut hero_transform = Transform::default();
-		hero_transform.set_translation_xyz(TILE_SIZE, -TILE_SIZE, 0.5);
+		// Create hero (player character).
 		let hero_sprite = load_hero_sprite(world);
-		world
+		let hero = world
 			.create_entity()
 			.with(Hero)
 			.with(Direction::Down)
 			.with(Collider)
-			.with(hero_transform)
+			.with(Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 })
+			.with(Transform::default())
 			.with(hero_sprite)
 			.build();
 
-		// Add region.
+		// Create region.
 		let region = Region::load(world, "test.ron");
+
+		// Move hero to the region's first entrance.
+		region.place_at_entrance(
+			hero,
+			1,
+			&mut world.write_storage::<Position>(),
+			&mut world.write_storage::<Direction>(),
+		);
+
+		// Insert the region into the world.
 		world.insert(region);
 
 		add_camera(world);

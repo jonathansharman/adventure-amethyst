@@ -1,11 +1,10 @@
 use crate::{
-	component::{Collider, Terrain},
+	component::{Collider, Position, Terrain},
 	constants::*,
 	resource::Region,
 };
 
 use amethyst::{
-	core::Transform,
 	derive::SystemDesc,
 	ecs::{Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 };
@@ -19,19 +18,19 @@ impl<'a> System<'a> for Collision {
 		ReadExpect<'a, Region>,
 		ReadStorage<'a, Collider>,
 		ReadStorage<'a, Terrain>,
-		WriteStorage<'a, Transform>,
+		WriteStorage<'a, Position>,
 	);
 
-	fn run(&mut self, (region, colliders, terrains, mut transforms): Self::SystemData) {
-		for (_, transform) in (&colliders, &mut transforms).join() {
-			let translation = transform.translation();
-			let x = translation.x;
+	fn run(&mut self, (region, colliders, terrains, mut positions): Self::SystemData) {
+		for (_, position) in (&colliders, &mut positions).join() {
+			let x = position.x;
 			let x_floor = TILE_SIZE * (x / TILE_SIZE).floor();
-			let y = translation.y;
+			let y = position.y;
 			let y_floor = TILE_SIZE * (y / TILE_SIZE).floor();
 
 			// Detect collisions with the surrounding walls in each diagonal direction.
-			let is_wall = |x, y| region.terrain_at_x_y(&terrains, x, y) == Some(Terrain::Wall);
+			let is_wall = |x, y| region.terrain_at_position(&terrains, Position { x, y })
+				.map_or(false, |terrain| terrain.blocks_movement());
 			let bottom_left = is_wall(x_floor, y_floor);
 			let bottom_right = is_wall(x_floor + TILE_SIZE, y_floor);
 			let top_left = is_wall(x_floor, y_floor + TILE_SIZE);
@@ -41,20 +40,20 @@ impl<'a> System<'a> for Collision {
 			let mut multi_hit = false;
 			if bottom_left && bottom_right {
 				// Bottom collision
-				transform.set_translation_y(y_floor + TILE_SIZE);
+				position.y = y_floor + TILE_SIZE;
 				multi_hit = true;
 			} else if top_left && top_right {
 				// Top collision
-				transform.set_translation_y(y_floor);
+				position.y = y_floor;
 				multi_hit = true;
 			}
 			if bottom_left && top_left {
 				// Left collision
-				transform.set_translation_x(x_floor + TILE_SIZE);
+				position.x = x_floor + TILE_SIZE;
 				multi_hit = true;
 			} else if bottom_right && top_right {
 				// Right collision
-				transform.set_translation_x(x_floor);
+				position.x = x_floor;
 				multi_hit = true;
 			}
 			if multi_hit {
@@ -122,10 +121,10 @@ impl<'a> System<'a> for Collision {
 			// Perform the push.
 			if let Some(push_direction) = push_direction {
 				match push_direction {
-					PushDirection::Up => transform.set_translation_y(y_floor + TILE_SIZE),
-					PushDirection::Down => transform.set_translation_y(y_floor),
-					PushDirection::Right => transform.set_translation_x(x_floor + TILE_SIZE),
-					PushDirection::Left => transform.set_translation_x(x_floor),
+					PushDirection::Up => position.y = y_floor + TILE_SIZE,
+					PushDirection::Down => position.y = y_floor,
+					PushDirection::Right => position.x = x_floor + TILE_SIZE,
+					PushDirection::Left => position.x = x_floor,
 				};
 			}
 		}

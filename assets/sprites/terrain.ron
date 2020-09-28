@@ -1,6 +1,6 @@
 Grid((
-	texture_width: 80,
-	texture_height: 40,
-	columns: 2,
-	sprite_count: Some(2),
+	texture_width: 160,
+	texture_height: 120,
+	columns: 4,
+	sprite_count: Some(10),
 ))
