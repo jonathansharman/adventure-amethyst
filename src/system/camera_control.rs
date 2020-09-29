@@ -22,7 +22,7 @@ impl<'a> System<'a> for CameraControl {
 
 	fn run(&mut self, (camera, heroes, mut transforms): Self::SystemData) {
 		// The camera follows the hero.
-		if let Some((_, hero_transform)) = (&heroes, &transforms).join().next() {
+		if let Some((_hero, hero_transform)) = (&heroes, &transforms).join().next() {
 			let hero_translation = hero_transform.translation().clone();
 			let camera_transform = transforms.get_mut(camera.entity).unwrap();
 			camera_transform.set_translation_x(hero_translation.x);

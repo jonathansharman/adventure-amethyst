@@ -23,7 +23,7 @@ impl<'a> System<'a> for Animation {
 	);
 
 	fn run(&mut self, (heroes, positions, directions, mut sprites, mut transforms): Self::SystemData) {
-		for (_, position, direction, sprite, transform) in (&heroes, &positions, &directions, &mut sprites, &mut transforms).join() {
+		for (_hero, position, direction, sprite, transform) in (&heroes, &positions, &directions, &mut sprites, &mut transforms).join() {
 			// Update translation according to position.
 			transform.set_translation_xyz(position.x, position.y, 0.5);
 			// Update sprite according to direction.

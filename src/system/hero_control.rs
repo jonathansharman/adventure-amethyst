@@ -29,7 +29,7 @@ impl<'a> System<'a> for HeroControl {
 	fn run(&mut self, (input, heroes, mut directions, mut positions): Self::SystemData) {
 		const ORTHOGONAL_SPEED: f32 = 5.0;
 		const DIAGONAL_SPEED: f32 = 0.70710678118 * 5.0;
-		for (_, direction, position) in (&heroes, &mut directions, &mut positions).join() {
+		for (_hero, direction, position) in (&heroes, &mut directions, &mut positions).join() {
 			// Move.
 			let mut vx: i16 = 0;
 			let mut vy: i16 = 0;

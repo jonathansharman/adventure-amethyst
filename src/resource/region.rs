@@ -4,64 +4,52 @@ use crate::{
 };
 
 use amethyst::{
-	assets::{AssetStorage, Loader},
+	assets::Handle,
 	core::Transform,
-	ecs::{Entity, ReadStorage, WriteStorage},
-	prelude::*,
-	renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+	ecs::{Entity, Entities, ReadStorage, WriteStorage},
+	renderer::{SpriteRender, SpriteSheet},
 };
 use ron::de::from_reader;
 use serde::Deserialize;
 
 use std::fs::File;
 
-#[derive(Deserialize)]
-struct Entrance {
-	row: usize,
-	col: usize,
-	direction: Direction,
-}
-
 pub struct Region {
+	sheet_handle: Handle<SpriteSheet>,
 	row_count: usize,
 	col_count: usize,
 	tiles: Vec<Entity>,
 	entrances: Vec<Entrance>,
-}
-
-/// Intermediary type for reading region data from a file.
-#[derive(Deserialize)]
-struct RegionData {
-	col_count: usize,
-	terrain: Vec<Terrain>,
-	entrances: Vec<Entrance>,
+	exits: Vec<Exit>,
 }
 
 impl Region {
-	/// Loads a region from `filename` within the `assets/regions` directory.
-	pub fn load(world: &mut World, filename: &str) -> Region {
+	/// Creates a new empty region.
+	pub fn new(sheet_handle: Handle<SpriteSheet>) -> Region {
+		Region {
+			sheet_handle,
+			row_count: 0,
+			col_count: 0,
+			tiles: Vec::new(),
+			entrances: Vec::new(),
+			exits: Vec::new(),
+		}
+	}
+
+	/// Loads region data from `filename` within the `assets/regions` directory.
+	pub fn load<'a>(
+		&mut self,
+		filename: &str,
+		entities: &Entities<'a>,
+		terrains: &mut WriteStorage<'a, Terrain>,
+		transforms: &mut WriteStorage<'a, Transform>,
+		sprites: &mut WriteStorage<'a, SpriteRender>,
+	) {
 		// Load region data from file.
 		let path = format!("assets/regions/{}", filename);
-		let file = File::open(&path).expect("Could not open region file.");
-		let region_data: RegionData = from_reader(file).unwrap();
-		// Set up terrain texture and sprite sheet.
-		let texture_handle;
-		let sheet_handle;
-		{
-			let loader = world.read_resource::<Loader>();
-			texture_handle = loader.load(
-				"sprites/terrain.png",
-				ImageFormat::default(),
-				(),
-				&world.read_resource::<AssetStorage<Texture>>(),
-			);
-			sheet_handle = loader.load(
-				"sprites/terrain.ron",
-				SpriteSheetFormat(texture_handle),
-				(),
-				&world.read_resource::<AssetStorage<SpriteSheet>>(),
-			);
-		}
+		let file = File::open(&path).expect("Could not open region file");
+		let region_data: RegionData = from_reader(file).expect("Error in region file");
+
 		// Generate tiles from terrain data.
 		let mut tiles: Vec<Entity> = Vec::new();
 		let row_count = region_data.terrain.len() / region_data.col_count;
@@ -75,26 +63,27 @@ impl Region {
 			transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * -TILE_SIZE, 0.0);
 			// Set sprite based on terrain.
 			let sprite = SpriteRender {
-				sprite_sheet: sheet_handle.clone(),
+				sprite_sheet: self.sheet_handle.clone(),
 				sprite_number: terrain as usize,
 			};
 			// Add the tile to the world and the region's tile list.
-			let tile = world
-				.create_entity()
-				.with(terrain)
-				.with(transform)
-				.with(sprite)
+			let tile = entities
+				.build_entity()
+				.with(terrain, terrains)
+				.with(transform, transforms)
+				.with(sprite, sprites)
 				.build();
 			tiles.push(tile);
 		}
-		Region {
-			row_count,
-			col_count,
-			tiles,
-			entrances: region_data.entrances,
-		}
+		// Assign to fields.
+		self.row_count = row_count;
+		self.col_count = col_count;
+		self.tiles = tiles;
+		self.entrances = region_data.entrances;
+		self.exits = region_data.exits;
 	}
 
+	/// Places `entity` at the entrance at index `entrance_idx`.
 	pub fn place_at_entrance(
 		&self,
 		entity: Entity,
@@ -104,9 +93,39 @@ impl Region {
 	) {
 		let entrance = &self.entrances[entrance_idx];
 		let position = positions.get_mut(entity).unwrap();
-		position.x = entrance.col as f32 * TILE_SIZE;
-		position.y = entrance.row as f32 * -TILE_SIZE;
+		position.x = entrance.location.col as f32 * TILE_SIZE;
+		position.y = entrance.location.row as f32 * -TILE_SIZE;
 		*directions.get_mut(entity).unwrap() = entrance.direction;
+	}
+
+	/// Causes `entity` to take the exit it is standing on, if any.
+	pub fn take_exit<'a>(
+		&mut self,
+		entity: Entity,
+		entities: &Entities<'a>,
+		positions: &mut WriteStorage<'a, Position>,
+		directions: &mut WriteStorage<'a, Direction>,
+		terrains: &mut WriteStorage<'a, Terrain>,
+		transforms: &mut WriteStorage<'a, Transform>,
+		sprites: &mut WriteStorage<'a, SpriteRender>,
+	) {
+		let position = positions.get(entity);
+		let tile_coords: Option<TileCoords> = position.and_then(|position| {
+			// Check position of center rather than upper-left corner.
+			Position {
+				x: position.x + TILE_SIZE / 2.0,
+				y: position.y - TILE_SIZE / 2.0
+			}.into()
+		});
+		if let Some(tile_coords) = tile_coords {
+			for exit in self.exits.clone() {
+				if exit.location == tile_coords {
+					self.load(&exit.target_region, entities, terrains, transforms, sprites);
+					self.place_at_entrance(entity, exit.target_entrance_idx, positions, directions);
+					return;
+				}
+			}
+		}
 	}
 
 	/// Gets the terrain at the given `row` and `col`, if any.
@@ -130,4 +149,28 @@ impl Region {
 			self.terrain_at_tile_coords(terrains, tile_coords)
 		})
 	}
+}
+
+/// Intermediary type for reading region data from a file.
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize)]
+struct RegionData {
+	col_count: usize,
+	terrain: Vec<Terrain>,
+	entrances: Vec<Entrance>,
+	exits: Vec<Exit>,
+}
+
+/// An entrance to a region.
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Deserialize)]
+struct Entrance {
+	location: TileCoords,
+	direction: Direction,
+}
+
+/// An exit from a region.
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize)]
+struct Exit {
+	location: TileCoords,
+	target_region: String,
+	target_entrance_idx: usize,
 }

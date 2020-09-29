@@ -22,7 +22,7 @@ impl<'a> System<'a> for Collision {
 	);
 
 	fn run(&mut self, (region, colliders, terrains, mut positions): Self::SystemData) {
-		for (_, position) in (&colliders, &mut positions).join() {
+		for (_hero, position) in (&colliders, &mut positions).join() {
 			let x = position.x;
 			let x_floor = TILE_SIZE * (x / TILE_SIZE).floor();
 			let y = position.y;

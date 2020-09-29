@@ -46,7 +46,33 @@ impl SimpleState for Playing {
 			.build();
 
 		// Create region.
-		let region = Region::load(world, "test.ron");
+		let texture_handle;
+		let sheet_handle;
+		{
+			let loader = world.read_resource::<Loader>();
+			texture_handle = loader.load(
+				"sprites/terrain.png",
+				ImageFormat::default(),
+				(),
+				&world.read_resource::<AssetStorage<Texture>>(),
+			);
+			sheet_handle = loader.load(
+				"sprites/terrain.ron",
+				SpriteSheetFormat(texture_handle),
+				(),
+				&world.read_resource::<AssetStorage<SpriteSheet>>(),
+			);
+		}
+		let mut region = Region::new(sheet_handle);
+
+		// Load starting region.
+		region.load(
+			"test.ron",
+			&world.entities(),
+			&mut world.write_storage::<Terrain>(),
+			&mut world.write_storage::<Transform>(),
+			&mut world.write_storage::<SpriteRender>(),
+		);
 
 		// Move hero to the region's first entrance.
 		region.place_at_entrance(
