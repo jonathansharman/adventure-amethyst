@@ -26,10 +26,10 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, Position>,
 	);
 
-	fn run(&mut self, (input, heroes, mut directions, mut positions): Self::SystemData) {
+	fn run(&mut self, (input, all_heroes, mut all_directions, mut all_positions): Self::SystemData) {
 		const ORTHOGONAL_SPEED: f32 = 5.0;
 		const DIAGONAL_SPEED: f32 = 0.70710678118 * 5.0;
-		for (_hero, direction, position) in (&heroes, &mut directions, &mut positions).join() {
+		for (_hero, direction, position) in (&all_heroes, &mut all_directions, &mut all_positions).join() {
 			// Move.
 			let mut vx: i16 = 0;
 			let mut vy: i16 = 0;

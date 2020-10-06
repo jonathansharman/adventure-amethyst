@@ -1,8 +1,10 @@
 use crate::{
 	component::{
+		Collider,
+		Direction,
+		Enemy,
 		Hero,
 		Position,
-		Direction,
 		Terrain,
 	},
 	resource::Region,
@@ -34,21 +36,36 @@ impl<'a> System<'a> for Travel {
 		ReadStorage<'a, Hero>,
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Direction>,
+		WriteStorage<'a, Collider>,
 		WriteStorage<'a, Terrain>,
+		WriteStorage<'a, Enemy>,
 		WriteStorage<'a, Transform>,
 		WriteStorage<'a, SpriteRender>,
 	);
 
-	fn run(&mut self, (entities, mut region, heroes, mut positions, mut directions, mut terrains, mut transforms, mut sprites): Self::SystemData) {
-		for (hero_entity, _hero) in (&*entities, &heroes).join() {
+	fn run(&mut self, (
+		entities,
+		mut region,
+		all_heroes,
+		mut all_positions,
+		mut all_directions,
+		mut all_colliders,
+		mut all_terrain,
+		mut all_enemies,
+		mut all_transforms,
+		mut all_sprites,
+	): Self::SystemData) {
+		for (hero_entity, _hero) in (&*entities, &all_heroes).join() {
 			region.take_exit(
 				hero_entity,
 				&entities,
-				&mut positions,
-				&mut directions,
-				&mut terrains,
-				&mut transforms,
-				&mut sprites,
+				&mut all_positions,
+				&mut all_directions,
+				&mut all_colliders,
+				&mut all_terrain,
+				&mut all_enemies,
+				&mut all_transforms,
+				&mut all_sprites,
 			);
 		}
 	}

@@ -36,4 +36,9 @@ RegionData(
 			target_entrance_idx: 1,
 		),
 	],
+	enemies: [
+		(
+			location: (row: 1, col: 4),
+		),
+	],
 )

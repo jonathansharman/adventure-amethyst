@@ -1,5 +1,5 @@
 use crate::{
-	component::Hero,
+	component::{Hero, Position},
 	resource::Camera,
 };
 
@@ -17,16 +17,16 @@ impl<'a> System<'a> for CameraControl {
 	type SystemData = (
 		ReadExpect<'a, Camera>,
 		ReadStorage<'a, Hero>,
+		ReadStorage<'a, Position>,
 		WriteStorage<'a, Transform>,
 	);
 
-	fn run(&mut self, (camera, heroes, mut transforms): Self::SystemData) {
+	fn run(&mut self, (camera, all_heroes, all_positions, mut all_transforms): Self::SystemData) {
 		// The camera follows the hero.
-		if let Some((_hero, hero_transform)) = (&heroes, &transforms).join().next() {
-			let hero_translation = hero_transform.translation().clone();
-			let camera_transform = transforms.get_mut(camera.entity).unwrap();
-			camera_transform.set_translation_x(hero_translation.x);
-			camera_transform.set_translation_y(hero_translation.y);
+		if let Some((_hero, hero_position)) = (&all_heroes, &all_positions).join().next() {
+			let camera_transform = all_transforms.get_mut(camera.entity).unwrap();
+			camera_transform.set_translation_x(hero_position.x);
+			camera_transform.set_translation_y(hero_position.y);
 		}
 	}
 }

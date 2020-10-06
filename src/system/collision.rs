@@ -21,15 +21,15 @@ impl<'a> System<'a> for Collision {
 		WriteStorage<'a, Position>,
 	);
 
-	fn run(&mut self, (region, colliders, terrains, mut positions): Self::SystemData) {
-		for (_hero, position) in (&colliders, &mut positions).join() {
+	fn run(&mut self, (region, all_colliders, all_terrains, mut all_positions): Self::SystemData) {
+		for (_hero, position) in (&all_colliders, &mut all_positions).join() {
 			let x = position.x;
 			let x_floor = TILE_SIZE * (x / TILE_SIZE).floor();
 			let y = position.y;
 			let y_floor = TILE_SIZE * (y / TILE_SIZE).floor();
 
 			// Detect collisions with the surrounding walls in each diagonal direction.
-			let is_wall = |x, y| region.terrain_at_position(&terrains, Position { x, y })
+			let is_wall = |x, y| region.terrain_at_position(&all_terrains, Position { x, y })
 				.map_or(false, |terrain| terrain.blocks_movement());
 			let bottom_left = is_wall(x_floor, y_floor);
 			let bottom_right = is_wall(x_floor + TILE_SIZE, y_floor);

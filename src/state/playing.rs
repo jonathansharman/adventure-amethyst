@@ -2,6 +2,7 @@ use crate::{
 	component::{
 		Collider,
 		Direction,
+		Enemy,
 		Hero,
 		Position,
 		Terrain,
@@ -46,30 +47,17 @@ impl SimpleState for Playing {
 			.build();
 
 		// Create region.
-		let texture_handle;
-		let sheet_handle;
-		{
-			let loader = world.read_resource::<Loader>();
-			texture_handle = loader.load(
-				"sprites/terrain.png",
-				ImageFormat::default(),
-				(),
-				&world.read_resource::<AssetStorage<Texture>>(),
-			);
-			sheet_handle = loader.load(
-				"sprites/terrain.ron",
-				SpriteSheetFormat(texture_handle),
-				(),
-				&world.read_resource::<AssetStorage<SpriteSheet>>(),
-			);
-		}
-		let mut region = Region::new(sheet_handle);
+		let mut region = Region::new(world);
 
 		// Load starting region.
 		region.load(
 			"test.ron",
 			&world.entities(),
 			&mut world.write_storage::<Terrain>(),
+			&mut world.write_storage::<Enemy>(),
+			&mut world.write_storage::<Position>(),
+			&mut world.write_storage::<Direction>(),
+			&mut world.write_storage::<Collider>(),
 			&mut world.write_storage::<Transform>(),
 			&mut world.write_storage::<SpriteRender>(),
 		);
@@ -118,13 +106,13 @@ impl SimpleState for Playing {
 fn load_hero_sprite(world: &mut World) -> SpriteRender {
 	let loader = world.read_resource::<Loader>();
 	let texture_handle = loader.load(
-		"sprites/hero.png",
+		"sprites/arrow.png",
 		ImageFormat::default(),
 		(),
 		&world.read_resource::<AssetStorage<Texture>>(),
 	);
 	let sheet_handle = loader.load(
-		"sprites/hero.ron",
+		"sprites/arrow.ron",
 		SpriteSheetFormat(texture_handle),
 		(),
 		&world.read_resource::<AssetStorage<SpriteSheet>>(),
