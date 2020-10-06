@@ -22,14 +22,15 @@ impl<'a> System<'a> for HeroControl {
 	type SystemData = (
 		Read<'a, InputHandler<InputBindings>>,
 		ReadStorage<'a, Hero>,
-		WriteStorage<'a, Direction>,
 		WriteStorage<'a, Position>,
+		WriteStorage<'a, Direction>,
 	);
 
-	fn run(&mut self, (input, all_heroes, mut all_directions, mut all_positions): Self::SystemData) {
+	fn run(&mut self, (input, all_heroes, mut all_positions, mut all_directions): Self::SystemData) {
 		const ORTHOGONAL_SPEED: f32 = 5.0;
-		const DIAGONAL_SPEED: f32 = 0.70710678118 * 5.0;
-		for (_hero, direction, position) in (&all_heroes, &mut all_directions, &mut all_positions).join() {
+		const DIAGONAL_SPEED: f32 = 0.70710678118 * ORTHOGONAL_SPEED;
+		let component_iter = (&all_heroes, &mut all_positions, &mut all_directions).join();
+		for (_hero, position, direction) in component_iter {
 			// Move.
 			let mut vx: i16 = 0;
 			let mut vy: i16 = 0;

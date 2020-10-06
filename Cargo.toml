@@ -8,6 +8,7 @@ edition = "2018"
 amethyst = {version = "0.15.2", features = ["no-slow-safety-checks"]}
 log = { version = "0.4.8", features = ["serde"] }
 nalgebra = "0.19.0"
+rand = "0.7.3"
 ron = "0.6.2"
 serde = { version = "1.0.115", features = ["derive"] }
 

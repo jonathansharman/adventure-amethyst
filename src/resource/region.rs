@@ -1,5 +1,6 @@
 use crate::{
 	component::{
+		behavior::Wander,
 		Collider,
 		Direction,
 		Enemy,
@@ -98,6 +99,7 @@ impl Region {
 		entities: &Entities<'a>,
 		all_terrain: &mut WriteStorage<'a, Terrain>,
 		all_enemies: &mut WriteStorage<'a, Enemy>,
+		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_positions: &mut WriteStorage<'a, Position>,
 		all_directions: &mut WriteStorage<'a, Direction>,
 		all_colliders: &mut WriteStorage<'a, Collider>,
@@ -155,6 +157,7 @@ impl Region {
 				entities
 					.build_entity()
 					.with(Enemy, all_enemies)
+					.with(Wander::default(), all_wanders)
 					.with(enemy_data.location.into(), all_positions)
 					.with(Direction::Down, all_directions)
 					.with(Collider, all_colliders)
@@ -197,6 +200,7 @@ impl Region {
 		all_colliders: &mut WriteStorage<'a, Collider>,
 		all_terrain: &mut WriteStorage<'a, Terrain>,
 		all_enemies: &mut WriteStorage<'a, Enemy>,
+		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_transforms: &mut WriteStorage<'a, Transform>,
 		all_sprites: &mut WriteStorage<'a, SpriteRender>,
 	) {
@@ -216,6 +220,7 @@ impl Region {
 						entities,
 						all_terrain,
 						all_enemies,
+						all_wanders,
 						all_positions,
 						all_directions,
 						all_colliders,

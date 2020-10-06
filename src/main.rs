@@ -26,7 +26,7 @@ fn main() -> amethyst::Result<()> {
 	let display_config = app_root.join("config/display_config.ron");
 	let key_bindings_path = app_root.join("config/input.ron");
 
-	let game_data = GameDataBuilder::default()
+	let game_data = { GameDataBuilder::default()
 		// Transform
 		.with_bundle(TransformBundle::new())?
 		// Input
@@ -45,14 +45,12 @@ fn main() -> amethyst::Result<()> {
 		)?
 		// Systems
 		.with(system::HeroControl, "hero_control", &["input_system"])
-		.with_barrier()
+		.with(system::EnemyControl, "enemy_control", &[])
 		.with(system::Travel, "travel", &[])
 		.with(system::Collision, "collision", &[])
-		.with_barrier()
 		.with(system::Animation, "animation", &[])
-		.with_barrier()
 		.with(system::CameraControl, "camera_control", &[])
-		;
+	};
 
 	Application::new(resources, state::Playing, game_data)?.run();
 

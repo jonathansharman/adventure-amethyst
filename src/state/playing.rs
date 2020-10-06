@@ -1,5 +1,6 @@
 use crate::{
 	component::{
+		behavior::Wander,
 		Collider,
 		Direction,
 		Enemy,
@@ -58,6 +59,7 @@ impl SimpleState for Playing {
 			&world.entities(),
 			&mut world.write_storage::<Terrain>(),
 			&mut world.write_storage::<Enemy>(),
+			&mut world.write_storage::<Wander>(),
 			&mut world.write_storage::<Position>(),
 			&mut world.write_storage::<Direction>(),
 			&mut world.write_storage::<Collider>(),

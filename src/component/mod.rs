@@ -1,3 +1,4 @@
+pub mod behavior;
 mod collider;
 mod direction;
 mod enemy;
