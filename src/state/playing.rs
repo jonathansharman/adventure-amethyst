@@ -23,6 +23,7 @@ use amethyst::{
 	ui::{Anchor, FontHandle, LineMode, TtfFormat, UiImage, UiText, UiTransform},
 	window::ScreenDimensions,
 };
+use nalgebra::base::Vector3;
 
 /// The main gameplay state.
 pub struct Playing;
@@ -35,14 +36,16 @@ impl SimpleState for Playing {
 		world.register::<Terrain>();
 
 		// Create hero (player character).
+		let mut hero_transform = Transform::default();
+		hero_transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 		let hero_sprite = load_hero_sprite(world);
 		let hero = world
 			.create_entity()
 			.with(Hero)
+			.with(Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 })
 			.with(Direction::Down)
 			.with(Collider)
-			.with(Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 })
-			.with(Transform::default())
+			.with(hero_transform)
 			.with(hero_sprite)
 			.build();
 
@@ -118,7 +121,7 @@ fn load_hero_sprite(world: &mut World) -> SpriteRender {
 		&world.read_resource::<AssetStorage<SpriteSheet>>(),
 	);
 	SpriteRender {
-		sprite_sheet: sheet_handle.clone(),
+		sprite_sheet: sheet_handle,
 		sprite_number: 0,
 	}
 }

@@ -23,6 +23,7 @@ use amethyst::{
 		Texture,
 	},
 };
+use nalgebra::Vector3;
 use ron::de::from_reader;
 use serde::Deserialize;
 
@@ -127,6 +128,7 @@ impl Region {
 			// Set transform.
 			let mut transform = Transform::default();
 			transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * -TILE_SIZE, 0.0);
+			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Set sprite based on terrain.
 			let sprite = SpriteRender {
 				sprite_sheet: self.terrain_sheet_handle.clone(),
@@ -144,6 +146,8 @@ impl Region {
 		// Generate enemies.
 		let enemies = region_data.enemies.into_iter()
 			.map(|enemy_data| {
+				let mut transform = Transform::default();
+				transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 				let sprite = SpriteRender {
 					sprite_sheet: self.enemy_sheet_handle.clone(),
 					sprite_number: 0,
@@ -154,7 +158,7 @@ impl Region {
 					.with(enemy_data.location.into(), all_positions)
 					.with(Direction::Down, all_directions)
 					.with(Collider, all_colliders)
-					.with(Transform::default(), all_transforms)
+					.with(transform, all_transforms)
 					.with(sprite, all_sprites)
 					.build()
 			})
