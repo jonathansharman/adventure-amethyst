@@ -30,12 +30,12 @@ impl From<TileCoords> for Position {
 
 impl From<Position> for Option<TileCoords> {
 	fn from(position: Position) -> Self {
-		if position.x < 0.0 || position.y > 0.0 {
+		if position.x < -0.5 || position.y > 0.5 {
 			None
 		} else {
 			Some(TileCoords {
-				row: (position.y / -TILE_SIZE) as usize,
-				col: (position.x / TILE_SIZE) as usize,
+				row: (position.y / -TILE_SIZE + 0.5) as usize,
+				col: (position.x / TILE_SIZE + 0.5) as usize,
 			})
 		}
 	}

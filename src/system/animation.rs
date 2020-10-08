@@ -8,6 +8,7 @@ use amethyst::{
 	ecs::{Join, ReadStorage, System, SystemData, WriteStorage},
 	renderer::SpriteRender,
 };
+use nalgebra::base::Vector3;
 
 /// Moves the camera.
 #[derive(SystemDesc)]
@@ -42,6 +43,8 @@ impl<'a> System<'a> for Animation {
 		for (_hero, position, direction, sprite, transform) in components_iter {
 			// Update translation according to position.
 			transform.set_translation_xyz(position.x, position.y, 0.5);
+			// Increase scale.
+			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Update sprite according to direction.
 			sprite.sprite_number = *direction as usize;
 		}
@@ -56,6 +59,8 @@ impl<'a> System<'a> for Animation {
 		for (_enemy, position, direction, sprite, transform) in components_iter {
 			// Update translation according to position.
 			transform.set_translation_xyz(position.x, position.y, 0.5);
+			// Increase scale.
+			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Update sprite according to direction.
 			sprite.sprite_number = *direction as usize;
 		}

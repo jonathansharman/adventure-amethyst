@@ -148,8 +148,6 @@ impl Region {
 		// Generate enemies.
 		let enemies = region_data.enemies.into_iter()
 			.map(|enemy_data| {
-				let mut transform = Transform::default();
-				transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 				let sprite = SpriteRender {
 					sprite_sheet: self.enemy_sheet_handle.clone(),
 					sprite_number: 0,
@@ -160,8 +158,8 @@ impl Region {
 					.with(Wander::default(), all_wanders)
 					.with(enemy_data.location.into(), all_positions)
 					.with(Direction::Down, all_directions)
-					.with(Collider, all_colliders)
-					.with(transform, all_transforms)
+					.with(Collider { width: TILE_SIZE, height: TILE_SIZE }, all_colliders)
+					.with(Transform::default(), all_transforms)
 					.with(sprite, all_sprites)
 					.build()
 			})
@@ -205,13 +203,7 @@ impl Region {
 		all_sprites: &mut WriteStorage<'a, SpriteRender>,
 	) {
 		let position = all_positions.get(entity);
-		let tile_coords: Option<TileCoords> = position.and_then(|position| {
-			// Check position of center rather than upper-left corner.
-			Position {
-				x: position.x + TILE_SIZE / 2.0,
-				y: position.y - TILE_SIZE / 2.0
-			}.into()
-		});
+		let tile_coords: Option<TileCoords> = position.and_then(|position| (*position).into());
 		if let Some(tile_coords) = tile_coords {
 			for exit in self.exits.clone() {
 				if exit.location == tile_coords {
