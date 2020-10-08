@@ -1,9 +1,11 @@
 use crate::{
 	component::{
+		Animation,
 		behavior::Wander,
 		Collider,
 		Direction,
 		Enemy,
+		Frame,
 		Hero,
 		Position,
 		Terrain,
@@ -25,6 +27,8 @@ use amethyst::{
 	window::ScreenDimensions,
 };
 
+use std::time::Duration;
+
 /// The main gameplay state.
 pub struct Playing;
 
@@ -43,6 +47,15 @@ impl SimpleState for Playing {
 			.with(Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 })
 			.with(Direction::Down)
 			.with(Collider { width: TILE_SIZE, height: TILE_SIZE })
+			.with(Animation::new(vec!(
+				Frame {
+					up: 0,
+					down: 1,
+					left: 2,
+					right: 3,
+					duration: Duration::from_secs(1),
+				}
+			)))
 			.with(Transform::default())
 			.with(hero_sprite)
 			.build();
@@ -60,6 +73,7 @@ impl SimpleState for Playing {
 			&mut world.write_storage::<Position>(),
 			&mut world.write_storage::<Direction>(),
 			&mut world.write_storage::<Collider>(),
+			&mut world.write_storage::<Animation>(),
 			&mut world.write_storage::<Transform>(),
 			&mut world.write_storage::<SpriteRender>(),
 		);

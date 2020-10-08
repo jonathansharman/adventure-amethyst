@@ -1,11 +1,15 @@
-use crate::{
-	component::{Direction, Enemy, Hero, Position},
+use crate::component::{
+	Direction,
+	Position,
 };
 
 use amethyst::{
-	core::Transform,
+	core::{
+		timing::Time,
+		Transform,
+	},
 	derive::SystemDesc,
-	ecs::{Join, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage},
 	renderer::SpriteRender,
 };
 use nalgebra::base::Vector3;
@@ -16,53 +20,39 @@ pub struct Animation;
 
 impl<'a> System<'a> for Animation {
 	type SystemData = (
-		ReadStorage<'a, Hero>,
-		ReadStorage<'a, Enemy>,
+		WriteStorage<'a, crate::component::Animation>,
 		ReadStorage<'a, Position>,
 		ReadStorage<'a, Direction>,
 		WriteStorage<'a, SpriteRender>,
 		WriteStorage<'a, Transform>,
+		Read<'a, Time>,
 	);
 
 	fn run(&mut self, (
-		all_heroes,
-		all_enemies,
+		mut all_animations,
 		all_positions,
 		all_directions,
 		mut all_sprites,
 		mut all_transforms,
+		time,
 	): Self::SystemData) {
-		// Hero animation.
 		let components_iter = (
-			&all_heroes,
+			&mut all_animations,
 			&all_positions,
 			&all_directions,
 			&mut all_sprites,
 			&mut all_transforms,
 		).join();
-		for (_hero, position, direction, sprite, transform) in components_iter {
+		for (animation, position, direction, sprite, transform) in components_iter {
+			// Update animation.
+			animation.advance(time.delta_time());
+			animation.set_direction(*direction);
 			// Update translation according to position.
 			transform.set_translation_xyz(position.x, position.y, 0.5);
 			// Increase scale.
 			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Update sprite according to direction.
-			sprite.sprite_number = *direction as usize;
-		}
-		// Enemy animation.
-		let components_iter = (
-			&all_enemies,
-			&all_positions,
-			&all_directions,
-			&mut all_sprites,
-			&mut all_transforms,
-		).join();
-		for (_enemy, position, direction, sprite, transform) in components_iter {
-			// Update translation according to position.
-			transform.set_translation_xyz(position.x, position.y, 0.5);
-			// Increase scale.
-			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
-			// Update sprite according to direction.
-			sprite.sprite_number = *direction as usize;
+			sprite.sprite_number = animation.current_sprite_number();
 		}
 	}
 }

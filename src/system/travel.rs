@@ -1,5 +1,6 @@
 use crate::{
 	component::{
+		Animation,
 		behavior::Wander,
 		Collider,
 		Direction,
@@ -40,6 +41,7 @@ impl<'a> System<'a> for Travel {
 		WriteStorage<'a, Collider>,
 		WriteStorage<'a, Terrain>,
 		WriteStorage<'a, Enemy>,
+		WriteStorage<'a, Animation>,
 		WriteStorage<'a, Wander>,
 		WriteStorage<'a, Transform>,
 		WriteStorage<'a, SpriteRender>,
@@ -54,6 +56,7 @@ impl<'a> System<'a> for Travel {
 		mut all_colliders,
 		mut all_terrain,
 		mut all_enemies,
+		mut all_animations,
 		mut all_wanders,
 		mut all_transforms,
 		mut all_sprites,
@@ -67,6 +70,7 @@ impl<'a> System<'a> for Travel {
 				&mut all_colliders,
 				&mut all_terrain,
 				&mut all_enemies,
+				&mut all_animations,
 				&mut all_wanders,
 				&mut all_transforms,
 				&mut all_sprites,

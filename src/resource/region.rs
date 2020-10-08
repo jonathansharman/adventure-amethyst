@@ -1,9 +1,11 @@
 use crate::{
 	component::{
+		Animation,
 		behavior::Wander,
 		Collider,
 		Direction,
 		Enemy,
+		Frame,
 		Position,
 		Terrain,
 		TileCoords,
@@ -28,7 +30,10 @@ use nalgebra::Vector3;
 use ron::de::from_reader;
 use serde::Deserialize;
 
-use std::fs::File;
+use std::{
+	fs::File,
+	time::Duration,
+};
 
 pub struct Region {
 	terrain_sheet_handle: Handle<SpriteSheet>,
@@ -103,6 +108,7 @@ impl Region {
 		all_positions: &mut WriteStorage<'a, Position>,
 		all_directions: &mut WriteStorage<'a, Direction>,
 		all_colliders: &mut WriteStorage<'a, Collider>,
+		all_animations: &mut WriteStorage<'a, Animation>,
 		all_transforms: &mut WriteStorage<'a, Transform>,
 		all_sprites: &mut WriteStorage<'a, SpriteRender>,
 	) {
@@ -159,6 +165,15 @@ impl Region {
 					.with(enemy_data.location.into(), all_positions)
 					.with(Direction::Down, all_directions)
 					.with(Collider { width: TILE_SIZE, height: TILE_SIZE }, all_colliders)
+					.with(Animation::new(vec!(
+						Frame {
+							up: 0,
+							down: 1,
+							left: 2,
+							right: 3,
+							duration: Duration::from_secs(1),
+						}
+					)), all_animations)
 					.with(Transform::default(), all_transforms)
 					.with(sprite, all_sprites)
 					.build()
@@ -198,6 +213,7 @@ impl Region {
 		all_colliders: &mut WriteStorage<'a, Collider>,
 		all_terrain: &mut WriteStorage<'a, Terrain>,
 		all_enemies: &mut WriteStorage<'a, Enemy>,
+		all_animations: &mut WriteStorage<'a, Animation>,
 		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_transforms: &mut WriteStorage<'a, Transform>,
 		all_sprites: &mut WriteStorage<'a, SpriteRender>,
@@ -216,6 +232,7 @@ impl Region {
 						all_positions,
 						all_directions,
 						all_colliders,
+						all_animations,
 						all_transforms,
 						all_sprites,
 					);

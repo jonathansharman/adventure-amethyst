@@ -1,3 +1,4 @@
+mod animation;
 pub mod behavior;
 mod collider;
 mod direction;
@@ -6,6 +7,7 @@ mod hero;
 mod position;
 mod terrain;
 
+pub use animation::{Animation, Frame};
 pub use collider::Collider;
 pub use direction::Direction;
 pub use enemy::Enemy;

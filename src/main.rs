@@ -51,7 +51,6 @@ fn main() -> amethyst::Result<()> {
 		.with(system::Collision, "collision", &[])
 		.with_barrier()
 		.with(system::Animation, "animation", &[])
-		.with_barrier()
 		.with(system::CameraControl, "camera_control", &[])
 	};
 
