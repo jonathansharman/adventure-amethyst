@@ -7,8 +7,10 @@ use crate::{
 		Enemy,
 		Frame,
 		Hero,
+		Mobility,
 		Position,
 		Terrain,
+		Velocity,
 	},
 	constants::*,
 	resource::{
@@ -38,15 +40,23 @@ impl SimpleState for Playing {
 
 		// Register required components.
 		world.register::<Terrain>();
+		world.register::<Velocity>();
 
 		// Create hero (player character).
 		let hero_sprite = load_hero_sprite(world);
+		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
+		let hero_collider = Collider {
+			width: TILE_SIZE,
+			height: TILE_SIZE,
+			mobility: Mobility::Dynamic,
+		};
 		let hero = world
 			.create_entity()
 			.with(Hero)
-			.with(Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 })
+			.with(hero_position)
+			.with(Velocity::default())
 			.with(Direction::Down)
-			.with(Collider { width: TILE_SIZE, height: TILE_SIZE })
+			.with(hero_collider)
 			.with(Animation::new(vec!(
 				Frame {
 					up: 0,
@@ -64,13 +74,13 @@ impl SimpleState for Playing {
 		let mut region = Region::new(world);
 
 		// Load starting region.
-		region.load(
-			"test.ron",
+		region.load("test.ron",
 			&world.entities(),
 			&mut world.write_storage::<Terrain>(),
 			&mut world.write_storage::<Enemy>(),
 			&mut world.write_storage::<Wander>(),
 			&mut world.write_storage::<Position>(),
+			&mut world.write_storage::<Velocity>(),
 			&mut world.write_storage::<Direction>(),
 			&mut world.write_storage::<Collider>(),
 			&mut world.write_storage::<Animation>(),

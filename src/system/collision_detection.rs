@@ -11,9 +11,9 @@ use amethyst::{
 
 /// Does collision detection and response for characters.
 #[derive(SystemDesc)]
-pub struct Collision;
+pub struct CollisionDetection;
 
-impl<'a> System<'a> for Collision {
+impl<'a> System<'a> for CollisionDetection {
 	type SystemData = (
 		ReadExpect<'a, Region>,
 		ReadStorage<'a, Collider>,
@@ -52,6 +52,7 @@ impl<'a> System<'a> for Collision {
 			let bottom_right = is_wall(high.x, low.y);
 			let top_left = is_wall(low.x, high.y);
 			let top_right = is_wall(high.x, high.y);
+			//log::info!("{} {} {} {}", bottom_left, bottom_right, top_left, top_right);
 
 			// Easy cases: hitting at least two walls at once.
 			let mut multi_hit = false;
@@ -74,7 +75,7 @@ impl<'a> System<'a> for Collision {
 				multi_hit = true;
 			}
 			if multi_hit {
-				return;
+				continue;
 			}
 
 			// Harder case: hitting just one wall. Need to find the minimum distance needed to push the collider out of the wall.
@@ -114,7 +115,7 @@ impl<'a> System<'a> for Collision {
 					push_direction = Some(Direction::Down);
 				}
 				// Left collision
-				let push = high.x - snap.x;
+				let push = snap.x - low.x;
 				if push < min_push {
 					min_push = push;
 					push_direction = Some(Direction::Right);
@@ -128,7 +129,7 @@ impl<'a> System<'a> for Collision {
 					push_direction = Some(Direction::Down);
 				}
 				// Right collision
-				let push = high.x - snap.x;
+				let push = high.x - snap.x; 
 				if push < min_push {
 					push_direction = Some(Direction::Left);
 				}

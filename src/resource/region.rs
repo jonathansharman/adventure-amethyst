@@ -6,9 +6,11 @@ use crate::{
 		Direction,
 		Enemy,
 		Frame,
+		Mobility,
 		Position,
 		Terrain,
 		TileCoords,
+		Velocity,
 	},
 	constants::*,
 };
@@ -106,6 +108,7 @@ impl Region {
 		all_enemies: &mut WriteStorage<'a, Enemy>,
 		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_positions: &mut WriteStorage<'a, Position>,
+		all_velocities: &mut WriteStorage<'a, Velocity>,
 		all_directions: &mut WriteStorage<'a, Direction>,
 		all_colliders: &mut WriteStorage<'a, Collider>,
 		all_animations: &mut WriteStorage<'a, Animation>,
@@ -134,19 +137,19 @@ impl Region {
 			let row = i / col_count;
 			let col = i % col_count;
 			// Set transform.
-			let mut transform = Transform::default();
-			transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * -TILE_SIZE, 0.0);
-			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
+			let mut tile_transform = Transform::default();
+			tile_transform.set_translation_xyz(col as f32 * TILE_SIZE, row as f32 * -TILE_SIZE, 0.0);
+			tile_transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Set sprite based on terrain.
 			let sprite = SpriteRender {
 				sprite_sheet: self.terrain_sheet_handle.clone(),
 				sprite_number: terrain as usize,
 			};
-			// Add the tile to the world and the region's tile list.
+			// Add the tile to the world and the region's tile list, and track its collisions.
 			let tile = entities
 				.build_entity()
 				.with(terrain, all_terrain)
-				.with(transform, all_transforms)
+				.with(tile_transform, all_transforms)
 				.with(sprite, all_sprites)
 				.build();
 			tiles.push(tile);
@@ -158,13 +161,20 @@ impl Region {
 					sprite_sheet: self.enemy_sheet_handle.clone(),
 					sprite_number: 0,
 				};
-				entities
+				let enemy_position: Position = enemy_data.location.into();
+				let enemy_collider = Collider {
+					width: TILE_SIZE,
+					height: TILE_SIZE,
+					mobility: Mobility::Dynamic,
+				};
+				let enemy = entities
 					.build_entity()
 					.with(Enemy, all_enemies)
-					.with(Wander::default(), all_wanders)
-					.with(enemy_data.location.into(), all_positions)
+					.with(Wander, all_wanders)
+					.with(enemy_position, all_positions)
+					.with(Velocity::default(), all_velocities)
 					.with(Direction::Down, all_directions)
-					.with(Collider { width: TILE_SIZE, height: TILE_SIZE }, all_colliders)
+					.with(enemy_collider, all_colliders)
 					.with(Animation::new(vec!(
 						Frame {
 							up: 0,
@@ -176,7 +186,8 @@ impl Region {
 					)), all_animations)
 					.with(Transform::default(), all_transforms)
 					.with(sprite, all_sprites)
-					.build()
+					.build();
+				enemy
 			})
 			.collect();
 		// Assign to fields.
@@ -209,6 +220,7 @@ impl Region {
 		entity: Entity,
 		entities: &Entities<'a>,
 		all_positions: &mut WriteStorage<'a, Position>,
+		all_velocities: &mut WriteStorage<'a, Velocity>,
 		all_directions: &mut WriteStorage<'a, Direction>,
 		all_colliders: &mut WriteStorage<'a, Collider>,
 		all_terrain: &mut WriteStorage<'a, Terrain>,
@@ -230,6 +242,7 @@ impl Region {
 						all_enemies,
 						all_wanders,
 						all_positions,
+						all_velocities,
 						all_directions,
 						all_colliders,
 						all_animations,

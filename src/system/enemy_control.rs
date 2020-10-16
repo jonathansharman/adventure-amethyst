@@ -1,12 +1,12 @@
 use crate::component::{
 	behavior::Wander,
 	Direction,
-	Position,
+	Velocity,
 };
 
 use amethyst::{
 	derive::SystemDesc,
-	ecs::{Join, System, SystemData, WriteStorage},
+	ecs::{Join, ReadStorage, System, SystemData, WriteStorage},
 };
 use rand::Rng;
 
@@ -16,45 +16,31 @@ pub struct EnemyControl;
 
 impl<'a> System<'a> for EnemyControl {
 	type SystemData = (
-		WriteStorage<'a, Wander>,
-		WriteStorage<'a, Position>,
+		ReadStorage<'a, Wander>,
 		WriteStorage<'a, Direction>,
+		WriteStorage<'a, Velocity>,
 	);
 
-	fn run(&mut self, (mut all_wanders, mut all_positions, mut all_directions): Self::SystemData) {
+	fn run(&mut self, (all_wanders, mut all_directions, mut all_velocities): Self::SystemData) {
 		const SPEED: f32 = 3.0;
 		const TURN_THRESHOLD: f32 = 0.01;
 		const STOP_THRESHOLD: f32 = TURN_THRESHOLD + 0.01;
 
 		let mut rng = rand::thread_rng();
-		let component_iter = (&mut all_wanders, &mut all_positions, &mut all_directions).join();
-		for (wander, position, direction) in component_iter {
-			// Randomly change direction sometimes.
+		let component_iter = (&all_wanders, &mut all_directions, &mut all_velocities).join();
+		for (_wander, direction, velocity) in component_iter {
+			// Randomly change direction or stop.
 			let p = rng.gen::<f32>();
 			if (0.0..TURN_THRESHOLD).contains(&p) {
-				wander.direction = Some(rng.gen());
+				*direction = rng.gen();
+				*velocity = match *direction {
+					Direction::Up => Velocity { x: 0.0, y: SPEED },
+					Direction::Down => Velocity { x: 0.0, y: -SPEED },
+					Direction::Left => Velocity { x: -SPEED, y: 0.0 },
+					Direction::Right => Velocity { x: SPEED, y: 0.0 },
+				}
 			} else if (TURN_THRESHOLD..STOP_THRESHOLD).contains(&p) {
-				wander.direction = None
-			}
-			// Move according to current wander direction.
-			match wander.direction {
-				Some(Direction::Up) => {
-					*direction = Direction::Up;
-					position.y += SPEED;
-				},
-				Some(Direction::Down) => {
-					*direction = Direction::Down;
-					position.y -= SPEED;
-				},
-				Some(Direction::Left) => {
-					*direction = Direction::Left;
-					position.x -= SPEED;
-				},
-				Some(Direction::Right) => {
-					*direction = Direction::Right;
-					position.x += SPEED;
-				},
-				None => {},
+				*velocity = Velocity::default();
 			}
 		}
 	}

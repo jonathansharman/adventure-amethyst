@@ -40,5 +40,8 @@ RegionData(
 		(
 			location: (row: 1, col: 4),
 		),
+		(
+			location: (row: 3, col: 4),
+		),
 	],
 )
