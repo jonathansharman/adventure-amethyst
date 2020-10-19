@@ -46,12 +46,22 @@ impl<'a> System<'a> for HeroControl {
 			if input.action_is_down(&Actions::Right).unwrap() {
 				vx += 1;
 			}
-			// Update direction.
-			match (vx, vy) {
-				(0, -1) => *direction = Direction::Down,
-				(0, 1) => *direction = Direction::Up,
-				(-1, 0) => *direction = Direction::Left,
-				(1, 0) => *direction = Direction::Right,
+			// Update direction if needed. There are eight directions of movement but only four for animation.
+			match (*direction, vx, vy) {
+				// Moving in a cardinal direction.
+				(_, 0, -1) => *direction = Direction::Down,
+				(_, 0, 1) => *direction = Direction::Up,
+				(_, -1, 0) => *direction = Direction::Left,
+				(_, 1, 0) => *direction = Direction::Right,
+				// Facing up but moving down-left, down, or right.
+				(Direction::Up, _, -1) => *direction = Direction::Down,
+				// Facing down but moving up-left, up, or right.
+				(Direction::Down, _, 1) => *direction = Direction::Up,
+				// Facing right but moving up-left, left, or down-left.
+				(Direction::Right, -1, _) => *direction = Direction::Left,
+				// Facing left but moving up-right, right, or down-right.
+				(Direction::Left, 1, _) => *direction = Direction::Right,
+				// Already facing in a reasonable direction.
 				_ => {},
 			};
 			// Update translation.
