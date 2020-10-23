@@ -1,5 +1,10 @@
 use crate::{
-	component::{Direction, Hero, Velocity},
+	component::{
+		Direction,
+		Hero,
+		KnockedBack,
+		Velocity,
+	},
 	input_bindings::{InputBindings, Actions},
 };
 
@@ -22,15 +27,16 @@ impl<'a> System<'a> for HeroControl {
 	type SystemData = (
 		Read<'a, InputHandler<InputBindings>>,
 		ReadStorage<'a, Hero>,
+		ReadStorage<'a, KnockedBack>,
 		WriteStorage<'a, Velocity>,
 		WriteStorage<'a, Direction>,
 	);
 
-	fn run(&mut self, (input, all_heroes, mut all_velocities, mut all_directions): Self::SystemData) {
+	fn run(&mut self, (input, all_heroes, all_knock_backs, mut all_velocities, mut all_directions): Self::SystemData) {
 		const ORTHOGONAL_SPEED: f32 = 5.0;
 		const DIAGONAL_SPEED: f32 = 0.70710678118 * ORTHOGONAL_SPEED;
-		let component_iter = (&all_heroes, &mut all_velocities, &mut all_directions).join();
-		for (_hero, velocity, direction) in component_iter {
+		let component_iter = (&all_heroes, !&all_knock_backs, &mut all_velocities, &mut all_directions).join();
+		for (_hero, _knock_back, velocity, direction) in component_iter {
 			// Move.
 			let mut vx: i16 = 0;
 			let mut vy: i16 = 0;

@@ -1,12 +1,21 @@
 use crate::{
-	component::{Collider, Direction, Position, Terrain},
+	component::{
+		Collider,
+		Direction,
+		Enemy,
+		Hero,
+		KnockedBack,
+		Position,
+		Terrain,
+		Velocity,
+	},
 	constants::*,
 	resource::Region,
 };
 
 use amethyst::{
 	derive::SystemDesc,
-	ecs::{Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 };
 
 /// Does collision detection and response for characters.
@@ -16,12 +25,26 @@ pub struct CollisionDetection;
 impl<'a> System<'a> for CollisionDetection {
 	type SystemData = (
 		ReadExpect<'a, Region>,
+		Entities<'a>,
 		ReadStorage<'a, Collider>,
 		ReadStorage<'a, Terrain>,
 		WriteStorage<'a, Position>,
+		ReadStorage<'a, Hero>,
+		ReadStorage<'a, Enemy>,
+		WriteStorage<'a, KnockedBack>,
 	);
 
-	fn run(&mut self, (region, all_colliders, all_terrains, mut all_positions): Self::SystemData) {
+	fn run(&mut self, (
+		region,
+		entities,
+		all_colliders,
+		all_terrains,
+		mut all_positions,
+		all_heroes,
+		all_enemies,
+		mut all_knocked_backs,
+	): Self::SystemData) {
+		// Push colliders out of obstacles.
 		for (collider, position) in (&all_colliders, &mut all_positions).join() {
 			if collider.width > TILE_SIZE || collider.height > TILE_SIZE {
 				panic!("Collider with width or height larger than tile width/height not supported");
@@ -143,6 +166,53 @@ impl<'a> System<'a> for CollisionDetection {
 					Direction::Right => position.x = snap.x + collider.width / 2.0,
 					Direction::Left => position.x = snap.x - collider.width / 2.0,
 				};
+			}
+		}
+
+		// Handle hero-enemy collisions.
+		let mut max_overlap_area = 0.0;
+		let mut closest_colliding_position = None;
+		let hero_component_iter = (&entities, &all_heroes, &all_colliders, &all_positions).join();
+		for (hero_entity, _hero, hero_collider, hero_position) in hero_component_iter {
+			if all_knocked_backs.contains(hero_entity) {
+				// Ignore enemy collisions while already knocked back.
+				continue;
+			}
+			// Find the closest enemy in collision with the hero.
+			let enemy_component_iter = (&all_enemies, &all_colliders, &all_positions).join();
+			for (_enemy, enemy_collider, enemy_position) in enemy_component_iter {
+				let min_right = (hero_position.x + hero_collider.width / 2.0).min(enemy_position.x + enemy_collider.width / 2.0);
+				let max_left = (hero_position.x - hero_collider.width / 2.0).max(enemy_position.x - enemy_collider.width / 2.0);
+				let min_top = (hero_position.y + hero_collider.height / 2.0).min(enemy_position.y + enemy_collider.height / 2.0);
+				let max_bottom = (hero_position.y - hero_collider.height / 2.0).max(enemy_position.y - enemy_collider.height / 2.0);
+				let overlap_area = (min_right - max_left).max(0.0) * (min_top - max_bottom).max(0.0);
+				if overlap_area > max_overlap_area {
+					max_overlap_area = overlap_area;
+					closest_colliding_position = Some(enemy_position);
+				}
+			}
+			// If any enemies were close enough for a collision, knock the hero back from the closest one.
+			if let Some(enemy_position) = closest_colliding_position {
+				const KNOCKBACK_SPEED: f32 = 10.0;
+				const KNOCKBACK_FRAMES: u32 = 10;
+				// Compute heading of velocity based on displacement from the enemy to the hero.
+				let mut velocity = Velocity {
+					x: hero_position.x - enemy_position.x,
+					y: hero_position.y - enemy_position.y,
+				};
+				// Normalize knockback to a set speed.
+				if velocity.x != 0.0 || velocity.y != 0.0 {
+					let magnitude = f32::sqrt(velocity.x.powi(2) + velocity.y.powi(2));
+					velocity.x *= KNOCKBACK_SPEED / magnitude;
+					velocity.y *= KNOCKBACK_SPEED / magnitude;
+				} else {
+					// The enemy is directly on top of the hero. Knock towards the right arbitrarily.
+					velocity.x = KNOCKBACK_SPEED;
+				}
+				all_knocked_backs.insert(hero_entity, KnockedBack {
+					frames_left: KNOCKBACK_FRAMES,
+					velocity,
+				}).unwrap();
 			}
 		}
 	}

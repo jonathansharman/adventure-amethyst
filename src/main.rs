@@ -46,6 +46,7 @@ fn main() -> amethyst::Result<()> {
 		// Systems
 		.with(system::HeroControl, "hero_control", &["input_system"])
 		.with(system::EnemyControl, "enemy_control", &[])
+		.with(system::Knockback, "knockback", &[])
 		.with_barrier()
 		.with(system::Motion, "motion", &[])
 		.with_barrier()
