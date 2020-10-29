@@ -10,7 +10,7 @@ use crate::{
 		Terrain,
 		Velocity,
 	},
-	resource::Region,
+	resource::{Region, SpriteSheets},
 };
 
 use amethyst::{
@@ -19,6 +19,7 @@ use amethyst::{
 	ecs::{
 		Entities,
 		Join,
+		ReadExpect,
 		ReadStorage,
 		System,
 		SystemData,
@@ -36,6 +37,7 @@ impl<'a> System<'a> for Travel {
 	type SystemData = (
 		Entities<'a>,
 		WriteExpect<'a, Region>,
+		ReadExpect<'a, SpriteSheets>,
 		ReadStorage<'a, Hero>,
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Velocity>,
@@ -52,6 +54,7 @@ impl<'a> System<'a> for Travel {
 	fn run(&mut self, (
 		entities,
 		mut region,
+		sprite_sheets,
 		all_heroes,
 		mut all_positions,
 		mut all_velocities,
@@ -64,18 +67,19 @@ impl<'a> System<'a> for Travel {
 		mut all_transforms,
 		mut all_sprites,
 	): Self::SystemData) {
-		for (hero_entity, _hero) in (&*entities, &all_heroes).join() {
+		for (hero_id, _hero) in (&*entities, &all_heroes).join() {
 			region.take_exit(
-				hero_entity,
+				hero_id,
 				&entities,
+				&sprite_sheets,
+				&mut all_terrain,
+				&mut all_enemies,
+				&mut all_wanders,
 				&mut all_positions,
 				&mut all_velocities,
 				&mut all_directions,
 				&mut all_colliders,
-				&mut all_terrain,
-				&mut all_enemies,
 				&mut all_animations,
-				&mut all_wanders,
 				&mut all_transforms,
 				&mut all_sprites,
 			);

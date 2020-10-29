@@ -6,27 +6,19 @@ use crate::{
 		Direction,
 		Enemy,
 		Frame,
-		Mobility,
 		Position,
 		Terrain,
 		TileCoords,
 		Velocity,
 	},
 	constants::*,
+	resource::SpriteSheets,
 };
 
 use amethyst::{
-	assets::{AssetStorage, Handle, Loader},
 	core::Transform,
 	ecs::{Entity, Entities, ReadStorage, WriteStorage},
-	prelude::*,
-	renderer::{
-		ImageFormat,
-		SpriteRender,
-		SpriteSheet,
-		SpriteSheetFormat,
-		Texture,
-	},
+	renderer::SpriteRender,
 };
 use nalgebra::Vector3;
 use ron::de::from_reader;
@@ -38,8 +30,6 @@ use std::{
 };
 
 pub struct Region {
-	terrain_sheet_handle: Handle<SpriteSheet>,
-	enemy_sheet_handle: Handle<SpriteSheet>,
 	row_count: usize,
 	col_count: usize,
 	tiles: Vec<Entity>,
@@ -50,46 +40,8 @@ pub struct Region {
 
 impl Region {
 	/// Creates a new empty region.
-	pub fn new(world: &World) -> Region {
-		let loader = world.read_resource::<Loader>();
-		// Load terrain sprite sheet.
-		let terrain_texture_handle;
-		let terrain_sheet_handle;
-		{
-			terrain_texture_handle = loader.load(
-				"sprites/terrain.png",
-				ImageFormat::default(),
-				(),
-				&world.read_resource::<AssetStorage<Texture>>(),
-			);
-			terrain_sheet_handle = loader.load(
-				"sprites/terrain.ron",
-				SpriteSheetFormat(terrain_texture_handle),
-				(),
-				&world.read_resource::<AssetStorage<SpriteSheet>>(),
-			);
-		}
-		// Load enemy sprite sheet.
-		let enemy_texture_handle;
-		let enemy_sheet_handle;
-		{
-			enemy_texture_handle = loader.load(
-				"sprites/arrow.png",
-				ImageFormat::default(),
-				(),
-				&world.read_resource::<AssetStorage<Texture>>(),
-			);
-			enemy_sheet_handle = loader.load(
-				"sprites/arrow.ron",
-				SpriteSheetFormat(enemy_texture_handle),
-				(),
-				&world.read_resource::<AssetStorage<SpriteSheet>>(),
-			);
-		}
-		// Construct empty region.
+	pub fn new() -> Self {
 		Region {
-			terrain_sheet_handle,
-			enemy_sheet_handle,
 			row_count: 0,
 			col_count: 0,
 			tiles: Vec::new(),
@@ -104,6 +56,7 @@ impl Region {
 		&mut self,
 		filename: &str,
 		entities: &Entities<'a>,
+		sprite_sheets: &SpriteSheets,
 		all_terrain: &mut WriteStorage<'a, Terrain>,
 		all_enemies: &mut WriteStorage<'a, Enemy>,
 		all_wanders: &mut WriteStorage<'a, Wander>,
@@ -142,7 +95,7 @@ impl Region {
 			tile_transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Set sprite based on terrain.
 			let sprite = SpriteRender {
-				sprite_sheet: self.terrain_sheet_handle.clone(),
+				sprite_sheet: sprite_sheets.terrain.clone(),
 				sprite_number: terrain as usize,
 			};
 			// Add the tile to the world and the region's tile list, and track its collisions.
@@ -158,14 +111,13 @@ impl Region {
 		let enemies = region_data.enemies.into_iter()
 			.map(|enemy_data| {
 				let sprite = SpriteRender {
-					sprite_sheet: self.enemy_sheet_handle.clone(),
+					sprite_sheet: sprite_sheets.enemy.clone(),
 					sprite_number: 0,
 				};
 				let enemy_position: Position = enemy_data.location.into();
 				let enemy_collider = Collider {
-					width: TILE_SIZE,
-					height: TILE_SIZE,
-					mobility: Mobility::Dynamic,
+					half_width: 0.5 * TILE_SIZE,
+					half_height: 0.5 * TILE_SIZE,
 				};
 				let enemy = entities
 					.build_entity()
@@ -219,14 +171,15 @@ impl Region {
 		&mut self,
 		entity: Entity,
 		entities: &Entities<'a>,
+		sprite_sheets: &SpriteSheets,
+		all_terrain: &mut WriteStorage<'a, Terrain>,
+		all_enemies: &mut WriteStorage<'a, Enemy>,
+		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_positions: &mut WriteStorage<'a, Position>,
 		all_velocities: &mut WriteStorage<'a, Velocity>,
 		all_directions: &mut WriteStorage<'a, Direction>,
 		all_colliders: &mut WriteStorage<'a, Collider>,
-		all_terrain: &mut WriteStorage<'a, Terrain>,
-		all_enemies: &mut WriteStorage<'a, Enemy>,
 		all_animations: &mut WriteStorage<'a, Animation>,
-		all_wanders: &mut WriteStorage<'a, Wander>,
 		all_transforms: &mut WriteStorage<'a, Transform>,
 		all_sprites: &mut WriteStorage<'a, SpriteRender>,
 	) {
@@ -238,6 +191,7 @@ impl Region {
 					self.load(
 						&exit.target_region,
 						entities,
+						sprite_sheets,
 						all_terrain,
 						all_enemies,
 						all_wanders,
@@ -276,6 +230,12 @@ impl Region {
 		tile_coords.and_then(|tile_coords| {
 			self.terrain_at_tile_coords(all_terrain, tile_coords)
 		})
+	}
+}
+
+impl Default for Region {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 

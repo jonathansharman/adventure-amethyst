@@ -1,6 +1,17 @@
-use amethyst::ecs::{Component, DenseVecStorage};
+use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
-pub struct Hero;
+pub enum HeroState {
+	FreelyMoving,
+	Thrusting {
+		/// The sword used for the thrust
+		sword_id: Entity,
+		frames_left: u32,
+	},
+}
+
+pub struct Hero {
+	pub state: HeroState,
+}
 
 impl Component for Hero {
 	type Storage = DenseVecStorage<Self>;

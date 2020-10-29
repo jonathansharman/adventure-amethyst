@@ -1,5 +1,5 @@
 use amethyst::ecs::Entity;
 
 pub struct Camera {
-	pub entity: Entity,
+	pub id: Entity,
 }

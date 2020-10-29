@@ -23,8 +23,8 @@ impl<'a> System<'a> for CameraControl {
 
 	fn run(&mut self, (camera, all_heroes, all_positions, mut all_transforms): Self::SystemData) {
 		// The camera follows the hero.
-		if let Some((_hero, hero_position)) = (&all_heroes, &all_positions).join().next() {
-			let camera_transform = all_transforms.get_mut(camera.entity).unwrap();
+		for (_hero, hero_position) in (&all_heroes, &all_positions).join() {
+			let camera_transform = all_transforms.get_mut(camera.id).unwrap();
 			camera_transform.set_translation_x(hero_position.x);
 			camera_transform.set_translation_y(hero_position.y);
 		}

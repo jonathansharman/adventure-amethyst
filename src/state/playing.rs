@@ -7,7 +7,7 @@ use crate::{
 		Enemy,
 		Frame,
 		Hero,
-		Mobility,
+		HeroState,
 		Position,
 		Terrain,
 		Velocity,
@@ -16,15 +16,16 @@ use crate::{
 	resource::{
 		Camera,
 		Region,
+		SpriteSheets,
 	},
 };
 
 use amethyst::{
-	assets::{AssetStorage, Loader},
+	assets::Loader,
 	core::transform::Transform,
 	input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
 	prelude::*,
-	renderer::{Camera as AmethystCamera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+	renderer::{Camera as AmethystCamera, SpriteRender},
 	ui::{Anchor, FontHandle, LineMode, TtfFormat, UiImage, UiText, UiTransform},
 	window::ScreenDimensions,
 };
@@ -42,17 +43,18 @@ impl SimpleState for Playing {
 		world.register::<Terrain>();
 		world.register::<Velocity>();
 
+		// Load sprite sheets.
+		let sprite_sheets = SpriteSheets::new(&world);
+
 		// Create hero (player character).
-		let hero_sprite = load_hero_sprite(world);
 		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
 		let hero_collider = Collider {
-			width: TILE_SIZE,
-			height: TILE_SIZE,
-			mobility: Mobility::Dynamic,
+			half_width: 0.5 * TILE_SIZE,
+			half_height: 0.5 * TILE_SIZE,
 		};
 		let hero = world
 			.create_entity()
-			.with(Hero)
+			.with(Hero { state: HeroState::FreelyMoving })
 			.with(hero_position)
 			.with(Velocity::default())
 			.with(Direction::Down)
@@ -67,15 +69,20 @@ impl SimpleState for Playing {
 				}
 			)))
 			.with(Transform::default())
-			.with(hero_sprite)
+			.with(SpriteRender {
+				sprite_sheet: sprite_sheets.hero.clone(),
+				sprite_number: 0,
+			})
 			.build();
 
 		// Create region.
-		let mut region = Region::new(world);
+		let mut region = Region::new();
 
 		// Load starting region.
-		region.load("test.ron",
+		region.load(
+			"test.ron",
 			&world.entities(),
+			&sprite_sheets,
 			&mut world.write_storage::<Terrain>(),
 			&mut world.write_storage::<Enemy>(),
 			&mut world.write_storage::<Wander>(),
@@ -98,6 +105,9 @@ impl SimpleState for Playing {
 
 		// Insert the region into the world.
 		world.insert(region);
+
+		// Insert the sprite container into the world.
+		world.insert(sprite_sheets);
 
 		add_camera(world);
 
@@ -129,37 +139,17 @@ impl SimpleState for Playing {
 	}
 }
 
-fn load_hero_sprite(world: &mut World) -> SpriteRender {
-	let loader = world.read_resource::<Loader>();
-	let texture_handle = loader.load(
-		"sprites/arrow.png",
-		ImageFormat::default(),
-		(),
-		&world.read_resource::<AssetStorage<Texture>>(),
-	);
-	let sheet_handle = loader.load(
-		"sprites/arrow.ron",
-		SpriteSheetFormat(texture_handle),
-		(),
-		&world.read_resource::<AssetStorage<SpriteSheet>>(),
-	);
-	SpriteRender {
-		sprite_sheet: sheet_handle,
-		sprite_number: 0,
-	}
-}
-
 /// Adds the camera resource.
 fn add_camera(world: &mut World) {
 	let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 	let mut transform = Transform::default();
 	transform.set_translation_xyz(0.0, 0.0, 1.0);
-	let camera_entity = world
+	let camera_id = world
 		.create_entity()
 		.with(AmethystCamera::standard_2d(dimensions.width(), dimensions.height()))
 		.with(transform)
 		.build();
-	world.insert(Camera { entity: camera_entity });
+	world.insert(Camera { id: camera_id });
 }
 
 /// Creates a simple UI background and a UI text label.
