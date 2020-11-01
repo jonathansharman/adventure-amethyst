@@ -60,6 +60,7 @@ fn main() -> amethyst::Result<()> {
 		.with_barrier()
 		.with(system::Animation, "animation", &[])
 		.with(system::CameraControl, "camera_control", &[])
+		.with(system::HudUpdates, "hud_updates", &[])
 	};
 
 	Application::new(resources, state::Playing, game_data)?.run();

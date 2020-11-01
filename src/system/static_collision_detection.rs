@@ -28,12 +28,12 @@ impl<'a> System<'a> for StaticCollisionDetection {
 
 	fn run(&mut self, (
 		region,
-		all_colliders,
-		all_terrains,
-		mut all_positions,
+		sto_collider,
+		sto_terrain,
+		mut sto_position,
 	): Self::SystemData) {
 		// Push colliders out of obstacles.
-		for (collider, position) in (&all_colliders, &mut all_positions).join() {
+		for (collider, position) in (&sto_collider, &mut sto_position).join() {
 			if 2.0 * collider.half_width > TILE_SIZE || 2.0 * collider.half_height > TILE_SIZE {
 				panic!("Collider with width or height larger than tile width or height not supported");
 			}
@@ -56,7 +56,7 @@ impl<'a> System<'a> for StaticCollisionDetection {
 
 			// Detect collisions with the surrounding walls in each diagonal direction.
 			let is_wall = |x, y| {
-				region.terrain_at_position(&all_terrains, Position { x, y })
+				region.terrain_at_position(&sto_terrain, Position { x, y })
 					.map_or(false, |terrain| terrain.blocks_movement())
 			};
 			let bottom_left = is_wall(low.x, low.y);

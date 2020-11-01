@@ -21,10 +21,10 @@ impl<'a> System<'a> for CameraControl {
 		WriteStorage<'a, Transform>,
 	);
 
-	fn run(&mut self, (camera, all_heroes, all_positions, mut all_transforms): Self::SystemData) {
+	fn run(&mut self, (camera, sto_hero, sto_position, mut sto_transform): Self::SystemData) {
 		// The camera follows the hero.
-		for (_hero, hero_position) in (&all_heroes, &all_positions).join() {
-			let camera_transform = all_transforms.get_mut(camera.id).unwrap();
+		for (_hero, hero_position) in (&sto_hero, &sto_position).join() {
+			let camera_transform = sto_transform.get_mut(camera.id).unwrap();
 			camera_transform.set_translation_x(hero_position.x);
 			camera_transform.set_translation_y(hero_position.y);
 		}

@@ -3,7 +3,7 @@ use crate::{
 		Collider,
 		Direction,
 		Position,
-		Sword,
+		SwordAttack,
 	},
 	constants::*,
 };
@@ -21,26 +21,33 @@ pub struct SwordPositioning;
 impl<'a> System<'a> for SwordPositioning {
 	type SystemData = (
 		Entities<'a>,
-		WriteStorage<'a, Sword>,
+		WriteStorage<'a, SwordAttack>,
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Direction>,
 		WriteStorage<'a, Collider>,
 		WriteStorage<'a, Transform>,
 	);
 
-	fn run(&mut self, (entities, all_swords, mut all_positions, mut all_directions, mut all_colliders, mut all_transforms): Self::SystemData) {
+	fn run(&mut self, (
+		entities,
+		sto_sword_attack,
+		mut sto_position,
+		mut sto_direction,
+		mut sto_collider,
+		mut sto_transform,
+	): Self::SystemData) {
 		// Note: we can't borrow all components via join because we also need to borrow source components.
-		let components_iter = (&entities, &all_swords, &mut all_transforms).join();
-		for (sword_id, sword, sword_transform) in components_iter {
+		let components_iter = (&entities, &sto_sword_attack, &mut sto_transform).join();
+		for (sword_attack_id, sword_attack, sword_transform) in components_iter {
 			// Get source data.
-			let source_id = sword.source_id;
-			let source_position = all_positions.get(source_id).unwrap().clone();
-			let source_direction = all_directions.get(source_id).unwrap().clone();
-			let source_collider = all_colliders.get(source_id).unwrap().clone();
+			let source_id = sword_attack.source_id();
+			let source_position = sto_position.get(source_id).unwrap().clone();
+			let source_direction = sto_direction.get(source_id).unwrap().clone();
+			let source_collider = sto_collider.get(source_id).unwrap().clone();
 			// Get sword data.
-			let mut sword_position = all_positions.get_mut(sword_id).unwrap();
-			let sword_direction = all_directions.get_mut(sword_id).unwrap();
-			let mut sword_collider = all_colliders.get_mut(sword_id).unwrap();
+			let mut sword_position = sto_position.get_mut(sword_attack_id).unwrap();
+			let sword_direction = sto_direction.get_mut(sword_attack_id).unwrap();
+			let mut sword_collider = sto_collider.get_mut(sword_attack_id).unwrap();
 
 			// Update sword direction.
 			*sword_direction = source_direction;

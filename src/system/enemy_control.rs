@@ -23,18 +23,18 @@ impl<'a> System<'a> for EnemyControl {
 		WriteStorage<'a, Velocity>,
 	);
 
-	fn run(&mut self, (all_wanders, all_knocked_backs, mut all_directions, mut all_velocities): Self::SystemData) {
+	fn run(&mut self, (sto_wander, sto_knocked_back, mut sto_direction, mut sto_velocity): Self::SystemData) {
 		const SPEED: f32 = 3.0;
 		const TURN_THRESHOLD: f32 = 0.01;
 		const STOP_THRESHOLD: f32 = TURN_THRESHOLD + 0.01;
 
 		let mut rng = rand::thread_rng();
 		let components_iter = (
-			&all_wanders,
+			&sto_wander,
 			// No control while being knocked back
-			!&all_knocked_backs,
-			&mut all_directions,
-			&mut all_velocities,
+			!&sto_knocked_back,
+			&mut sto_direction,
+			&mut sto_velocity,
 		).join();
 		for (_wander, _knocked_back, direction, velocity) in components_iter {
 			// Randomly change direction or stop.

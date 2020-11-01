@@ -8,7 +8,7 @@ use crate::{
 		HeroState,
 		KnockedBack,
 		Position,
-		Sword,
+		SwordAttack,
 		Velocity,
 	},
 	constants::*,
@@ -42,7 +42,7 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Velocity>,
 		WriteStorage<'a, Direction>,
-		WriteStorage<'a, Sword>,
+		WriteStorage<'a, SwordAttack>,
 		WriteStorage<'a, Collider>,
 		WriteStorage<'a, Animation>,
 		WriteStorage<'a, Transform>,
@@ -53,16 +53,16 @@ impl<'a> System<'a> for HeroControl {
 		input,
 		entities,
 		sprite_sheets,
-		mut all_heroes,
-		all_knock_backs,
-		mut all_positions,
-		mut all_velocities,
-		mut all_directions,
-		mut all_swords,
-		mut all_colliders,
-		mut all_animations,
-		mut all_transforms,
-		mut all_sprites,
+		mut sto_hero,
+		sto_knock_back,
+		mut sto_position,
+		mut sto_velocity,
+		mut sto_direction,
+		mut sto_sword_attack,
+		mut sto_collider,
+		mut sto_animation,
+		mut sto_transform,
+		mut sto_sprite,
 	): Self::SystemData) {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
@@ -72,10 +72,10 @@ impl<'a> System<'a> for HeroControl {
 
 		let components_iter = (
 			&entities,
-			&mut all_heroes,
+			&mut sto_hero,
 			// No control while being knocked back
-			!&all_knock_backs,
-			&mut all_velocities,
+			!&sto_knock_back,
+			&mut sto_velocity,
 		).join();
 		for (hero_id, hero, _knock_back, velocity) in components_iter {
 			match hero.state {
@@ -88,7 +88,7 @@ impl<'a> System<'a> for HeroControl {
 							sprite_number: 0,
 						};
 
-						let hero_direction = all_directions.get(hero_id).unwrap();
+						let hero_direction = sto_direction.get(hero_id).unwrap();
 						let sword_collider = match hero_direction {
 							Direction::Up | Direction::Down => Collider {
 								half_width: SWORD_HALF_WIDTH,
@@ -108,25 +108,25 @@ impl<'a> System<'a> for HeroControl {
 								duration: Duration::from_secs(1),
 							}
 						));
-						let sword_id = entities
+						let sword_attack_id = entities
 							.build_entity()
-							.with(Sword { source_id: hero_id }, &mut all_swords)
-							.with(Position { x: 0.0, y: 0.0 }, &mut all_positions)
-							.with(*hero_direction, &mut all_directions)
-							.with(sword_collider, &mut all_colliders)
-							.with(sword_animation, &mut all_animations)
-							.with(Transform::default(), &mut all_transforms)
-							.with(sword_sprite, &mut all_sprites)
+							.with(SwordAttack::new(hero_id), &mut sto_sword_attack)
+							.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
+							.with(*hero_direction, &mut sto_direction)
+							.with(sword_collider, &mut sto_collider)
+							.with(sword_animation, &mut sto_animation)
+							.with(Transform::default(), &mut sto_transform)
+							.with(sword_sprite, &mut sto_sprite)
 							.build();
 						hero.state = HeroState::Thrusting {
-							sword_id,
+							sword_attack_id,
 							frames_left: THRUST_FRAMES,
 						};
 						// Skip movement checks if thrusting.
 						continue;
 					}
 					// Movement
-					let hero_direction = all_directions.get_mut(hero_id).unwrap();
+					let hero_direction = sto_direction.get_mut(hero_id).unwrap();
 					let mut vx: i16 = 0;
 					let mut vy: i16 = 0;
 					if input.action_is_down(&Actions::Up).unwrap() {
@@ -169,8 +169,8 @@ impl<'a> System<'a> for HeroControl {
 					}
 				},
 				// In the middle of a thrust
-				HeroState::Thrusting { sword_id, ref mut frames_left } => {
-					let hero_direction = all_directions.get(hero_id).unwrap();
+				HeroState::Thrusting { sword_attack_id, ref mut frames_left } => {
+					let hero_direction = sto_direction.get(hero_id).unwrap();
 					// Rush forward.
 					*velocity = match hero_direction {
 						Direction::Up => Velocity { x: 0.0, y: THRUST_SPEED },
@@ -182,7 +182,7 @@ impl<'a> System<'a> for HeroControl {
 					*frames_left -= 1;
 					if *frames_left == 0 {
 						hero.state = HeroState::FreelyMoving;
-						entities.delete(sword_id).unwrap();
+						entities.delete(sword_attack_id).unwrap();
 					}
 				},
 			}

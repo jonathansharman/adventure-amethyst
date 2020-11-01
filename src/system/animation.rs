@@ -29,19 +29,19 @@ impl<'a> System<'a> for Animation {
 	);
 
 	fn run(&mut self, (
-		mut all_animations,
-		all_positions,
-		all_directions,
-		mut all_sprites,
-		mut all_transforms,
+		mut sto_animation,
+		sto_position,
+		sto_direction,
+		mut sto_sprite,
+		mut sto_transform,
 		time,
 	): Self::SystemData) {
 		let components_iter = (
-			&mut all_animations,
-			&all_positions,
-			&all_directions,
-			&mut all_sprites,
-			&mut all_transforms,
+			&mut sto_animation,
+			&sto_position,
+			&sto_direction,
+			&mut sto_sprite,
+			&mut sto_transform,
 		).join();
 		for (animation, position, direction, sprite, transform) in components_iter {
 			// Update animation.

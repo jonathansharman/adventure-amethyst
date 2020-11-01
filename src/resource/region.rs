@@ -6,6 +6,7 @@ use crate::{
 		Direction,
 		Enemy,
 		Frame,
+		Health,
 		Position,
 		Terrain,
 		TileCoords,
@@ -41,7 +42,7 @@ pub struct Region {
 impl Region {
 	/// Creates a new empty region.
 	pub fn new() -> Self {
-		Region {
+		Self {
 			row_count: 0,
 			col_count: 0,
 			tiles: Vec::new(),
@@ -57,16 +58,17 @@ impl Region {
 		filename: &str,
 		entities: &Entities<'a>,
 		sprite_sheets: &SpriteSheets,
-		all_terrain: &mut WriteStorage<'a, Terrain>,
-		all_enemies: &mut WriteStorage<'a, Enemy>,
-		all_wanders: &mut WriteStorage<'a, Wander>,
-		all_positions: &mut WriteStorage<'a, Position>,
-		all_velocities: &mut WriteStorage<'a, Velocity>,
-		all_directions: &mut WriteStorage<'a, Direction>,
-		all_colliders: &mut WriteStorage<'a, Collider>,
-		all_animations: &mut WriteStorage<'a, Animation>,
-		all_transforms: &mut WriteStorage<'a, Transform>,
-		all_sprites: &mut WriteStorage<'a, SpriteRender>,
+		sto_terrain: &mut WriteStorage<'a, Terrain>,
+		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_health: &mut WriteStorage<'a, Health>,
+		sto_wander: &mut WriteStorage<'a, Wander>,
+		sto_positions: &mut WriteStorage<'a, Position>,
+		sto_velocity: &mut WriteStorage<'a, Velocity>,
+		sto_direction: &mut WriteStorage<'a, Direction>,
+		sto_collider: &mut WriteStorage<'a, Collider>,
+		sto_animation: &mut WriteStorage<'a, Animation>,
+		sto_transform: &mut WriteStorage<'a, Transform>,
+		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
 	) {
 		// Delete current entities.
 		for tile in self.tiles.iter() {
@@ -101,9 +103,9 @@ impl Region {
 			// Add the tile to the world and the region's tile list, and track its collisions.
 			let tile = entities
 				.build_entity()
-				.with(terrain, all_terrain)
-				.with(tile_transform, all_transforms)
-				.with(sprite, all_sprites)
+				.with(terrain, sto_terrain)
+				.with(tile_transform, sto_transform)
+				.with(sprite, sto_sprite)
 				.build();
 			tiles.push(tile);
 		}
@@ -121,12 +123,13 @@ impl Region {
 				};
 				let enemy = entities
 					.build_entity()
-					.with(Enemy, all_enemies)
-					.with(Wander, all_wanders)
-					.with(enemy_position, all_positions)
-					.with(Velocity::default(), all_velocities)
-					.with(Direction::Down, all_directions)
-					.with(enemy_collider, all_colliders)
+					.with(Enemy, sto_enemy)
+					.with(Health::new(ENEMY_BASE_HEALTH), sto_health)
+					.with(Wander, sto_wander)
+					.with(enemy_position, sto_positions)
+					.with(Velocity::default(), sto_velocity)
+					.with(Direction::Down, sto_direction)
+					.with(enemy_collider, sto_collider)
 					.with(Animation::new(vec!(
 						Frame {
 							up: 0,
@@ -135,9 +138,9 @@ impl Region {
 							right: 3,
 							duration: Duration::from_secs(1),
 						}
-					)), all_animations)
-					.with(Transform::default(), all_transforms)
-					.with(sprite, all_sprites)
+					)), sto_animation)
+					.with(Transform::default(), sto_transform)
+					.with(sprite, sto_sprite)
 					.build();
 				enemy
 			})
@@ -156,14 +159,14 @@ impl Region {
 		&self,
 		entity: Entity,
 		entrance_idx: usize,
-		all_positions: &mut WriteStorage<Position>,
-		all_directions: &mut WriteStorage<Direction>
+		sto_position: &mut WriteStorage<Position>,
+		sto_direction: &mut WriteStorage<Direction>
 	) {
 		let entrance = &self.entrances[entrance_idx];
-		let position = all_positions.get_mut(entity).unwrap();
+		let position = sto_position.get_mut(entity).unwrap();
 		position.x = entrance.location.col as f32 * TILE_SIZE;
 		position.y = entrance.location.row as f32 * -TILE_SIZE;
-		*all_directions.get_mut(entity).unwrap() = entrance.direction;
+		*sto_direction.get_mut(entity).unwrap() = entrance.direction;
 	}
 
 	/// Causes `entity` to take the exit it is standing on, if any.
@@ -172,18 +175,19 @@ impl Region {
 		entity: Entity,
 		entities: &Entities<'a>,
 		sprite_sheets: &SpriteSheets,
-		all_terrain: &mut WriteStorage<'a, Terrain>,
-		all_enemies: &mut WriteStorage<'a, Enemy>,
-		all_wanders: &mut WriteStorage<'a, Wander>,
-		all_positions: &mut WriteStorage<'a, Position>,
-		all_velocities: &mut WriteStorage<'a, Velocity>,
-		all_directions: &mut WriteStorage<'a, Direction>,
-		all_colliders: &mut WriteStorage<'a, Collider>,
-		all_animations: &mut WriteStorage<'a, Animation>,
-		all_transforms: &mut WriteStorage<'a, Transform>,
-		all_sprites: &mut WriteStorage<'a, SpriteRender>,
+		sto_terrain: &mut WriteStorage<'a, Terrain>,
+		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_health: &mut WriteStorage<'a, Health>,
+		sto_wander: &mut WriteStorage<'a, Wander>,
+		sto_position: &mut WriteStorage<'a, Position>,
+		sto_velocity: &mut WriteStorage<'a, Velocity>,
+		sto_direction: &mut WriteStorage<'a, Direction>,
+		sto_collider: &mut WriteStorage<'a, Collider>,
+		sto_animation: &mut WriteStorage<'a, Animation>,
+		sto_transform: &mut WriteStorage<'a, Transform>,
+		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
 	) {
-		let position = all_positions.get(entity);
+		let position = sto_position.get(entity);
 		let tile_coords: Option<TileCoords> = position.and_then(|position| (*position).into());
 		if let Some(tile_coords) = tile_coords {
 			for exit in self.exits.clone() {
@@ -192,18 +196,19 @@ impl Region {
 						&exit.target_region,
 						entities,
 						sprite_sheets,
-						all_terrain,
-						all_enemies,
-						all_wanders,
-						all_positions,
-						all_velocities,
-						all_directions,
-						all_colliders,
-						all_animations,
-						all_transforms,
-						all_sprites,
+						sto_terrain,
+						sto_enemy,
+						sto_health,
+						sto_wander,
+						sto_position,
+						sto_velocity,
+						sto_direction,
+						sto_collider,
+						sto_animation,
+						sto_transform,
+						sto_sprite,
 					);
-					self.place_at_entrance(entity, exit.target_entrance_idx, all_positions, all_directions);
+					self.place_at_entrance(entity, exit.target_entrance_idx, sto_position, sto_direction);
 					return;
 				}
 			}
@@ -211,7 +216,7 @@ impl Region {
 	}
 
 	/// Gets the terrain at the given `row` and `col`, if any.
-	pub fn terrain_at_tile_coords(&self, all_terrain: &ReadStorage<Terrain>, tile_coords: TileCoords) -> Option<Terrain> {
+	pub fn terrain_at_tile_coords(&self, sto_terrain: &ReadStorage<Terrain>, tile_coords: TileCoords) -> Option<Terrain> {
 		// Ensure coordinates are in bounds.
 		if tile_coords.row >= self.row_count || tile_coords.col >= self.col_count {
 			return None;
@@ -220,15 +225,15 @@ impl Region {
 		let index = tile_coords.row * self.col_count + tile_coords.col;
 		// Get terrain.
 		self.tiles.get(index).and_then(|tile| {
-			all_terrain.get(*tile).map(|terrain| *terrain)
+			sto_terrain.get(*tile).map(|terrain| *terrain)
 		})
 	}
 
 	/// Gets the terrain at the given (`x`, `y`) coordinates, if any.
-	pub fn terrain_at_position(&self, all_terrain: &ReadStorage<Terrain>, position: Position) -> Option<Terrain> {
+	pub fn terrain_at_position(&self, sto_terrain: &ReadStorage<Terrain>, position: Position) -> Option<Terrain> {
 		let tile_coords: Option<TileCoords> = position.into();
 		tile_coords.and_then(|tile_coords| {
-			self.terrain_at_tile_coords(all_terrain, tile_coords)
+			self.terrain_at_tile_coords(sto_terrain, tile_coords)
 		})
 	}
 }

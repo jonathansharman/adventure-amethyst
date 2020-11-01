@@ -4,7 +4,7 @@ pub enum HeroState {
 	FreelyMoving,
 	Thrusting {
 		/// The sword used for the thrust
-		sword_id: Entity,
+		sword_attack_id: Entity,
 		frames_left: u32,
 	},
 }

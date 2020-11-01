@@ -9,12 +9,13 @@ use amethyst::{
 	},
 };
 
-/// Container for all the game's sprite sheets.
+/// Container for all the game's sprite sheets and UI textures.
 pub struct SpriteSheets {
 	pub enemy: Handle<SpriteSheet>,
 	pub hero: Handle<SpriteSheet>,
 	pub sword: Handle<SpriteSheet>,
 	pub terrain: Handle<SpriteSheet>,
+	pub icons: Handle<Texture>,
 }
 
 impl SpriteSheets {
@@ -23,13 +24,16 @@ impl SpriteSheets {
 		let loader = world.read_resource::<Loader>();
 		let texture_storage = &world.read_resource::<AssetStorage<Texture>>();
 		let sprite_sheet_storage = &world.read_resource::<AssetStorage<SpriteSheet>>();
-		let load_sprite_sheet = |name| {
-			let texture_handle = loader.load(
+		let load_texture = |name| {
+			loader.load(
 				format!("sprites/{}.png", name),
 				ImageFormat::default(),
 				(),
 				texture_storage,
-			);
+			)
+		};
+		let load_sprite_sheet = |name| {
+			let texture_handle = load_texture(name);
 			loader.load(
 				format!("sprites/{}.ron", name),
 				SpriteSheetFormat(texture_handle),
@@ -42,6 +46,7 @@ impl SpriteSheets {
 			hero: load_sprite_sheet("arrow"),
 			sword: load_sprite_sheet("sword"),
 			terrain: load_sprite_sheet("terrain"),
+			icons: load_texture("icons"),
 		}
 	}
 }
