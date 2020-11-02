@@ -24,10 +24,14 @@ use crate::{
 
 use amethyst::{
 	core::transform::Transform,
-	input::{is_close_requested, is_key_down, VirtualKeyCode},
 	prelude::*,
 	renderer::{Camera as AmethystCamera, SpriteRender},
 	window::ScreenDimensions,
+	winit::{
+		dpi::LogicalSize,
+		Event,
+		WindowEvent,
+	},
 };
 
 use std::time::Duration;
@@ -120,11 +124,20 @@ impl SimpleState for Playing {
 	/// The following events are handled:
 	/// - The game state is quit when either the close button is clicked or when the escape key is pressed.
 	/// - Any other keypress is simply logged to the console.
-	fn handle_event(&mut self, mut _data: StateData<'_, GameData<'_, '_>>, event: StateEvent) -> SimpleTrans {
-		if let StateEvent::Window(event) = &event {
-			// Check for quit.
-			if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
-				return Trans::Quit;
+	fn handle_event(&mut self, data: StateData<'_, GameData<'_, '_>>, event: StateEvent) -> SimpleTrans {
+		if let StateEvent::Window(Event::WindowEvent { event, .. }) = &event {
+			match event {
+				WindowEvent::Resized(LogicalSize { width, height }) => {
+					let camera = data.world.fetch::<Camera>();
+					let mut sto_amethyst_camera = data.world.write_storage::<AmethystCamera>();
+					let amethyst_camera = sto_amethyst_camera.get_mut(camera.id).unwrap();
+					*amethyst_camera = AmethystCamera::standard_2d(*width as f32, *height as f32);
+				},
+				WindowEvent::CloseRequested => {
+					return Trans::Quit;
+				},
+				// Ignore other events.
+				_ => {},
 			}
 		}
 		Trans::None

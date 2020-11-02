@@ -1,5 +1,6 @@
 mod animation;
 mod camera_control;
+mod death;
 mod dynamic_collision_detection;
 mod enemy_control;
 mod hero_control;
@@ -7,11 +8,12 @@ mod hud_updates;
 mod knockback;
 mod motion;
 mod static_collision_detection;
-mod sword_positioning;
+mod sword_attack_updates;
 mod travel;
 
 pub use animation::Animation;
 pub use camera_control::CameraControl;
+pub use death::Death;
 pub use dynamic_collision_detection::DynamicCollisionDetection;
 pub use enemy_control::EnemyControl;
 pub use hero_control::HeroControl;
@@ -19,5 +21,5 @@ pub use hud_updates::HudUpdates;
 pub use knockback::Knockback;
 pub use motion::Motion;
 pub use static_collision_detection::StaticCollisionDetection;
-pub use sword_positioning::SwordPositioning;
+pub use sword_attack_updates::SwordAttackUpdates;
 pub use travel::Travel;

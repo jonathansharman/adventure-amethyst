@@ -74,8 +74,9 @@ impl Region {
 		for tile in self.tiles.iter() {
 			entities.delete(*tile).unwrap();
 		}
-		for enemy in self.enemies.iter() {
-			entities.delete(*enemy).unwrap();
+		for enemy_id in self.enemies.iter() {
+			// This may fail if the enemy is dead; ignore the error.
+			entities.delete(*enemy_id).unwrap_or_default();
 		}
 
 		// Load region data from file.

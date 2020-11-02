@@ -16,9 +16,9 @@ use amethyst::{
 
 /// Repositions swords next to their bearers.
 #[derive(SystemDesc)]
-pub struct SwordPositioning;
+pub struct SwordAttackUpdates;
 
-impl<'a> System<'a> for SwordPositioning {
+impl<'a> System<'a> for SwordAttackUpdates {
 	type SystemData = (
 		Entities<'a>,
 		WriteStorage<'a, SwordAttack>,
@@ -39,8 +39,13 @@ impl<'a> System<'a> for SwordPositioning {
 		// Note: we can't borrow all components via join because we also need to borrow source components.
 		let components_iter = (&entities, &sto_sword_attack, &mut sto_transform).join();
 		for (sword_attack_id, sword_attack, sword_transform) in components_iter {
-			// Get source data.
 			let source_id = sword_attack.source_id();
+			// If source no longer exists, delete this attack.
+			if !entities.is_alive(source_id) {
+				entities.delete(sword_attack_id).unwrap();
+				continue;
+			}
+			// Get source data.
 			let source_position = sto_position.get(source_id).unwrap().clone();
 			let source_direction = sto_direction.get(source_id).unwrap().clone();
 			let source_collider = sto_collider.get(source_id).unwrap().clone();
