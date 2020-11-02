@@ -30,7 +30,17 @@ use std::time::Duration;
 
 /// Controls the hero character based on player input.
 #[derive(SystemDesc)]
-pub struct HeroControl;
+pub struct HeroControl {
+	primary_action_down_last_frame: bool,
+}
+
+impl HeroControl {
+	pub fn new() -> Self {
+		Self {
+			primary_action_down_last_frame: false,
+		}
+	}
+}
 
 impl<'a> System<'a> for HeroControl {
 	type SystemData = (
@@ -70,6 +80,8 @@ impl<'a> System<'a> for HeroControl {
 		const THRUST_FRAMES: u32 = 9;
 		const THRUST_SPEED: f32 = 2.0 * ORTHOGONAL_SPEED;
 
+		let primary_action_down = input.action_is_down(&Actions::Primary).unwrap_or(false);
+
 		let components_iter = (
 			&entities,
 			&mut sto_hero,
@@ -82,7 +94,7 @@ impl<'a> System<'a> for HeroControl {
 				// Free for player to control
 				HeroState::FreelyMoving => {
 					// Sword thrust
-					if input.action_is_down(&Actions::Primary).unwrap() {
+					if !self.primary_action_down_last_frame && primary_action_down {
 						let sword_sprite = SpriteRender {
 							sprite_sheet: sprite_sheets.sword.clone(),
 							sprite_number: 0,
@@ -187,5 +199,7 @@ impl<'a> System<'a> for HeroControl {
 				},
 			}
 		}
+
+		self.primary_action_down_last_frame = primary_action_down;
 	}
 }

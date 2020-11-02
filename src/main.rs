@@ -44,7 +44,7 @@ fn main() -> amethyst::Result<()> {
 			.with_plugin(RenderFlat2D::default()),
 		)?
 		// Systems
-		.with(system::HeroControl, "hero_control", &["input_system"])
+		.with(system::HeroControl::new(), "hero_control", &["input_system"])
 		.with(system::EnemyControl, "enemy_control", &[])
 		.with(system::Knockback, "knockback", &[])
 		.with_barrier()
