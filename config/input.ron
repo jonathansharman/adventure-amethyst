@@ -5,7 +5,8 @@
 		Down: [[Key(Down)]],
 		Left: [[Key(Left)]],
 		Right: [[Key(Right)]],
-		Primary: [[Key(X)]],
-		Secondary: [[Key(Z)]],
+		Primary: [[Key(R)]],
+		Secondary: [[Key(E)]],
+		Strafe: [[Key(Space)]]
 	},
 )

@@ -18,6 +18,7 @@ pub enum Actions {
 	Right,
 	Primary,
 	Secondary,
+	Strafe,
 }
 
 impl Display for Axes {

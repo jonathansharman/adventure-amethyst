@@ -154,23 +154,26 @@ impl<'a> System<'a> for HeroControl {
 						vx += 1;
 					}
 					// Update direction if needed. There are eight directions of movement but only four for animation.
-					match (*hero_direction, vx, vy) {
-						// Moving in a cardinal direction.
-						(_, 0, -1) => *hero_direction = Direction::Down,
-						(_, 0, 1) => *hero_direction = Direction::Up,
-						(_, -1, 0) => *hero_direction = Direction::Left,
-						(_, 1, 0) => *hero_direction = Direction::Right,
-						// Facing up but moving down-left, down, or right.
-						(Direction::Up, _, -1) => *hero_direction = Direction::Down,
-						// Facing down but moving up-left, up, or right.
-						(Direction::Down, _, 1) => *hero_direction = Direction::Up,
-						// Facing right but moving up-left, left, or down-left.
-						(Direction::Right, -1, _) => *hero_direction = Direction::Left,
-						// Facing left but moving up-right, right, or down-right.
-						(Direction::Left, 1, _) => *hero_direction = Direction::Right,
-						// Already facing in a reasonable direction.
-						_ => {},
-					};
+					if !input.action_is_down(&Actions::Strafe).unwrap() {
+						// Not strafing.
+						match (*hero_direction, vx, vy) {
+							// Moving in a cardinal direction.
+							(_, 0, -1) => *hero_direction = Direction::Down,
+							(_, 0, 1) => *hero_direction = Direction::Up,
+							(_, -1, 0) => *hero_direction = Direction::Left,
+							(_, 1, 0) => *hero_direction = Direction::Right,
+							// Facing up but moving down-left, down, or right.
+							(Direction::Up, _, -1) => *hero_direction = Direction::Down,
+							// Facing down but moving up-left, up, or right.
+							(Direction::Down, _, 1) => *hero_direction = Direction::Up,
+							// Facing right but moving up-left, left, or down-left.
+							(Direction::Right, -1, _) => *hero_direction = Direction::Left,
+							// Facing left but moving up-right, right, or down-right.
+							(Direction::Left, 1, _) => *hero_direction = Direction::Right,
+							// Already facing in a reasonable direction.
+							_ => {},
+						};
+					}
 					// Update translation.
 					if vx == 0 || vy == 0 {
 						velocity.x = f32::try_from(vx).unwrap() * ORTHOGONAL_SPEED;
