@@ -12,4 +12,4 @@ pub const SWORD_THRUST_HALF_WIDTH: f32 = 6.0;
 /// The longest dimension of a sword thrust's collider.
 pub const SWORD_THRUST_HALF_LENGTH: f32 = 20.0;
 /// The radius of a sword slash attack.
-pub const SWORD_SLASH_RADIUS: f32 = 20.0;
+pub const SWORD_SLASH_RADIUS: f32 = 40.0;

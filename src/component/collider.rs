@@ -60,7 +60,9 @@ pub fn rect_intersects_half_disk(rectangle: (&RectangleCollider, &Position), hal
 	if in_different_half_planes {
 		return false;
 	}
-	// Check whether this closest point is within the disk.
+	// Check whether this closest point is within an epsilon of being within the disk.
+	// Using an epsilon to compensate for floating-point inaccuracy when the closest point is along the half disk's edge.
+	const EPSILON: f32 = f32::EPSILON;
 	let distance_squared = (closest.x - disk_pos.x).powi(2) + (closest.y - disk_pos.y).powi(2);
-	distance_squared <= half_disk_collider.radius.powi(2)
+	distance_squared - EPSILON <= half_disk_collider.radius.powi(2)
 }

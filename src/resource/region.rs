@@ -22,6 +22,7 @@ use amethyst::{
 	renderer::SpriteRender,
 };
 use nalgebra::Vector3;
+use rand::Rng;
 use ron::de::from_reader;
 use serde::Deserialize;
 
@@ -126,7 +127,7 @@ impl Region {
 					.build_entity()
 					.with(Enemy, sto_enemy)
 					.with(Health::new(ENEMY_BASE_HEALTH), sto_health)
-					.with(Wander, sto_wander)
+					.with(Wander { direction: rand::thread_rng().gen() }, sto_wander)
 					.with(enemy_position, sto_positions)
 					.with(Velocity::default(), sto_velocity)
 					.with(Direction::Down, sto_direction)
