@@ -110,7 +110,7 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		}
 		// Handle slash attacks against enemies.
 		for (
-			_slash_attack,
+			slash_attack,
 			slash_attack_collider,
 			slash_attack_position,
 		) in (&mut sto_slash_attack, &sto_half_disk_collider, &sto_position).join() {
@@ -121,12 +121,17 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 				if sto_knocked_back.contains(enemy_id) {
 					continue;
 				}
+				// Ignore collisions with enemies that have already been hit.
+				if slash_attack.has_been_hit(enemy_id) {
+					continue;
+				}
 				let intersecting = rect_intersects_half_disk(
 					(&enemy_collider, &enemy_position),
 					(&slash_attack_collider, &slash_attack_position),
 				);
 				if intersecting {
-					log::info!("Hit!");
+					// Mark this enemy has having been hit by this attack.
+					slash_attack.mark_as_hit(enemy_id);
 					// Compute heading of velocity based on displacement from the slash attack to the enemy.
 					let mut velocity = Velocity {
 						x: enemy_position.x - slash_attack_position.x,
