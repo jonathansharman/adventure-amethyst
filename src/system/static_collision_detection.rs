@@ -1,6 +1,6 @@
 use crate::{
 	component::{
-		Collider,
+		collider::RectangleCollider,
 		Direction,
 		Position,
 		Terrain,
@@ -21,19 +21,19 @@ pub struct StaticCollisionDetection;
 impl<'a> System<'a> for StaticCollisionDetection {
 	type SystemData = (
 		ReadExpect<'a, Region>,
-		ReadStorage<'a, Collider>,
+		ReadStorage<'a, RectangleCollider>,
 		ReadStorage<'a, Terrain>,
 		WriteStorage<'a, Position>,
 	);
 
 	fn run(&mut self, (
 		region,
-		sto_collider,
+		sto_rectangle_collider,
 		sto_terrain,
 		mut sto_position,
 	): Self::SystemData) {
 		// Push colliders out of obstacles.
-		for (collider, position) in (&sto_collider, &mut sto_position).join() {
+		for (collider, position) in (&sto_rectangle_collider, &mut sto_position).join() {
 			if 2.0 * collider.half_width > TILE_SIZE || 2.0 * collider.half_height > TILE_SIZE {
 				panic!("Collider with width or height larger than tile width or height not supported");
 			}

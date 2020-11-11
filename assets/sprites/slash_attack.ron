@@ -1,0 +1,34 @@
+List((
+	texture_width: 80,
+	texture_height: 40,
+	sprites: [
+		( // Up
+			x: 0,
+			y: 0,
+			width: 40,
+			height: 20,
+			offsets: Some((0.0, -10.0))
+		),
+		( // Down
+			x: 0,
+			y: 20,
+			width: 40,
+			height: 20,
+			offsets: Some((0.0, 10.0))
+		),
+		( // Left
+			x: 40,
+			y: 0,
+			width: 20,
+			height: 40,
+			offsets: Some((10.0, 0.0))
+		),
+		( // Right
+			x: 60,
+			y: 0,
+			width: 20,
+			height: 40,
+			offsets: Some((-10.0, 0.0))
+		),
+	],
+))

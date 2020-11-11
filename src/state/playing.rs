@@ -2,7 +2,7 @@ use crate::{
 	component::{
 		Animation,
 		behavior::Wander,
-		Collider,
+		collider::RectangleCollider,
 		Direction,
 		Enemy,
 		Frame,
@@ -52,7 +52,7 @@ impl SimpleState for Playing {
 
 		// Create hero (player character).
 		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
-		let hero_collider = Collider {
+		let hero_collider = RectangleCollider {
 			half_width: 0.5 * TILE_SIZE,
 			half_height: 0.5 * TILE_SIZE,
 		};
@@ -95,7 +95,7 @@ impl SimpleState for Playing {
 			&mut world.write_storage::<Position>(),
 			&mut world.write_storage::<Velocity>(),
 			&mut world.write_storage::<Direction>(),
-			&mut world.write_storage::<Collider>(),
+			&mut world.write_storage::<RectangleCollider>(),
 			&mut world.write_storage::<Animation>(),
 			&mut world.write_storage::<Transform>(),
 			&mut world.write_storage::<SpriteRender>(),

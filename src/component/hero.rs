@@ -2,9 +2,12 @@ use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
 pub enum HeroState {
 	FreelyMoving,
+	Slashing {
+		slash_attack_id: Entity,
+		frames_left: u32,
+	},
 	Thrusting {
-		/// The sword used for the thrust
-		sword_attack_id: Entity,
+		thrust_attack_id: Entity,
 		frames_left: u32,
 	},
 }

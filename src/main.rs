@@ -18,6 +18,8 @@ mod resource;
 mod state;
 mod system;
 
+use system::*;
+
 fn main() -> amethyst::Result<()> {
 	amethyst::start_logger(Default::default());
 
@@ -44,25 +46,25 @@ fn main() -> amethyst::Result<()> {
 			.with_plugin(RenderFlat2D::default()),
 		)?
 		// Systems
-		.with(system::HeroControl::new(), "hero_control", &["input_system"])
-		.with(system::EnemyControl, "enemy_control", &[])
-		.with(system::Knockback, "knockback", &[])
+		.with(HeroControl::new(), "hero_control", &["input_system"])
+		.with(EnemyControl, "enemy_control", &[])
+		.with(Knockback, "knockback", &[])
 		.with_barrier()
-		.with(system::Motion, "motion", &[])
+		.with(Motion, "motion", &[])
 		.with_barrier()
-		.with(system::Travel, "travel", &[])
+		.with(Travel, "travel", &[])
 		.with_barrier()
-		.with(system::StaticCollisionDetection, "static_collision_detection", &[])
+		.with(StaticCollisionDetection, "static_collision_detection", &[])
 		.with_barrier()
-		.with(system::DynamicCollisionDetection, "dynamic_collision_detection", &[])
+		.with(DynamicCollisionDetection, "dynamic_collision_detection", &[])
 		.with_barrier()
-		.with(system::Death, "death", &[])
+		.with(Death, "death", &[])
 		.with_barrier()
-		.with(system::SwordAttackUpdates, "sword_attack_updates", &[])
+		.with(SwordAttackUpdates, "sword_attack_updates", &[])
 		.with_barrier()
-		.with(system::Animation, "animation", &[])
-		.with(system::CameraControl, "camera_control", &[])
-		.with(system::HudUpdates, "hud_updates", &[])
+		.with(Animation, "animation", &[])
+		.with(CameraControl, "camera_control", &[])
+		.with(HudUpdates, "hud_updates", &[])
 	};
 
 	Application::new(resources, state::Playing, game_data)?.run();

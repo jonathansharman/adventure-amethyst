@@ -36,7 +36,7 @@ impl<'a> System<'a> for EnemyControl {
 			&mut sto_direction,
 			&mut sto_velocity,
 		).join();
-		for (_wander, _knocked_back, direction, velocity) in components_iter {
+		for (_wander, _no_knocked_back, direction, velocity) in components_iter {
 			// Randomly change direction or stop.
 			let p = rng.gen::<f32>();
 			if (0.0..TURN_THRESHOLD).contains(&p) {

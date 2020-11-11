@@ -1,14 +1,15 @@
 use crate::{
 	component::{
 		Animation,
-		Collider,
+		collider::{HalfDiskCollider, RectangleCollider},
 		Direction,
 		Frame,
 		Hero,
 		HeroState,
 		KnockedBack,
 		Position,
-		SwordAttack,
+		SlashAttack,
+		ThrustAttack,
 		Velocity,
 	},
 	constants::*,
@@ -52,8 +53,10 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Velocity>,
 		WriteStorage<'a, Direction>,
-		WriteStorage<'a, SwordAttack>,
-		WriteStorage<'a, Collider>,
+		WriteStorage<'a, SlashAttack>,
+		WriteStorage<'a, ThrustAttack>,
+		WriteStorage<'a, RectangleCollider>,
+		WriteStorage<'a, HalfDiskCollider>,
 		WriteStorage<'a, Animation>,
 		WriteStorage<'a, Transform>,
 		WriteStorage<'a, SpriteRender>,
@@ -68,8 +71,10 @@ impl<'a> System<'a> for HeroControl {
 		mut sto_position,
 		mut sto_velocity,
 		mut sto_direction,
-		mut sto_sword_attack,
-		mut sto_collider,
+		mut sto_slash_attack,
+		mut sto_thrust_attack,
+		mut sto_rectangle_collider,
+		mut sto_disk_arc_collider,
 		mut sto_animation,
 		mut sto_transform,
 		mut sto_sprite,
@@ -77,6 +82,7 @@ impl<'a> System<'a> for HeroControl {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
 		const DIAGONAL_SPEED: f32 = 0.70710678118 * ORTHOGONAL_SPEED;
+		const SLASH_FRAMES: u32 = 9;
 		const THRUST_FRAMES: u32 = 9;
 		const THRUST_SPEED: f32 = 2.0 * ORTHOGONAL_SPEED;
 
@@ -89,54 +95,10 @@ impl<'a> System<'a> for HeroControl {
 			!&sto_knock_back,
 			&mut sto_velocity,
 		).join();
-		for (hero_id, hero, _knock_back, velocity) in components_iter {
+		for (hero_id, hero, _no_knocked_back, velocity) in components_iter {
 			match hero.state {
 				// Free for player to control
 				HeroState::FreelyMoving => {
-					// Sword thrust
-					if !self.primary_action_down_last_frame && primary_action_down {
-						let sword_sprite = SpriteRender {
-							sprite_sheet: sprite_sheets.sword.clone(),
-							sprite_number: 0,
-						};
-
-						let hero_direction = sto_direction.get(hero_id).unwrap();
-						let sword_collider = match hero_direction {
-							Direction::Up | Direction::Down => Collider {
-								half_width: SWORD_HALF_WIDTH,
-								half_height: SWORD_HALF_LENGTH,
-							},
-							Direction::Left | Direction::Right => Collider {
-								half_width: SWORD_HALF_LENGTH,
-								half_height: SWORD_HALF_WIDTH,
-							},
-						};
-						let sword_animation = Animation::new(vec!(
-							Frame {
-								up: 0,
-								down: 1,
-								left: 2,
-								right: 3,
-								duration: Duration::from_secs(1),
-							}
-						));
-						let sword_attack_id = entities
-							.build_entity()
-							.with(SwordAttack::new(hero_id), &mut sto_sword_attack)
-							.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
-							.with(*hero_direction, &mut sto_direction)
-							.with(sword_collider, &mut sto_collider)
-							.with(sword_animation, &mut sto_animation)
-							.with(Transform::default(), &mut sto_transform)
-							.with(sword_sprite, &mut sto_sprite)
-							.build();
-						hero.state = HeroState::Thrusting {
-							sword_attack_id,
-							frames_left: THRUST_FRAMES,
-						};
-						// Skip movement checks if thrusting.
-						continue;
-					}
 					// Movement
 					let hero_direction = sto_direction.get_mut(hero_id).unwrap();
 					let mut vx: i16 = 0;
@@ -174,7 +136,7 @@ impl<'a> System<'a> for HeroControl {
 							_ => {},
 						};
 					}
-					// Update translation.
+					// Update velocity.
 					if vx == 0 || vy == 0 {
 						velocity.x = f32::try_from(vx).unwrap() * ORTHOGONAL_SPEED;
 						velocity.y = f32::try_from(vy).unwrap() * ORTHOGONAL_SPEED;
@@ -182,9 +144,102 @@ impl<'a> System<'a> for HeroControl {
 						velocity.x = f32::try_from(vx).unwrap() * DIAGONAL_SPEED;
 						velocity.y = f32::try_from(vy).unwrap() * DIAGONAL_SPEED;
 					}
+					// Check for sword attack.
+					if !self.primary_action_down_last_frame && primary_action_down {
+						let advancing = match hero_direction {
+							Direction::Up => vy == 1,
+							Direction::Down => vy == -1,
+							Direction::Left => vx == -1,
+							Direction::Right => vx == 1,
+						};
+						if advancing {
+							// Hero is advancing -> thrust attack.
+							let thrust_attack_sprite = SpriteRender {
+								sprite_sheet: sprite_sheets.thrust_attack.clone(),
+								sprite_number: 0,
+							};
+							let hero_direction = sto_direction.get(hero_id).unwrap();
+							let thrust_attack_collider = match hero_direction {
+								Direction::Up | Direction::Down => RectangleCollider {
+									half_width: SWORD_THRUST_HALF_WIDTH,
+									half_height: SWORD_THRUST_HALF_LENGTH,
+								},
+								Direction::Left | Direction::Right => RectangleCollider {
+									half_width: SWORD_THRUST_HALF_LENGTH,
+									half_height: SWORD_THRUST_HALF_WIDTH,
+								},
+							};
+							let thrust_attack_animation = Animation::new(vec!(
+								Frame {
+									up: 0,
+									down: 1,
+									left: 2,
+									right: 3,
+									duration: Duration::from_secs(1),
+								}
+							));
+							let thrust_attack_id = entities
+								.build_entity()
+								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
+								.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
+								.with(*hero_direction, &mut sto_direction)
+								.with(thrust_attack_collider, &mut sto_rectangle_collider)
+								.with(thrust_attack_animation, &mut sto_animation)
+								.with(Transform::default(), &mut sto_transform)
+								.with(thrust_attack_sprite, &mut sto_sprite)
+								.build();
+							hero.state = HeroState::Thrusting {
+								thrust_attack_id: thrust_attack_id,
+								frames_left: THRUST_FRAMES,
+							};
+						} else {
+							// Hero is strafing/retreating/standing still -> slash attack.
+							let slash_attack_sprite = SpriteRender {
+								sprite_sheet: sprite_sheets.slash_attack.clone(),
+								sprite_number: 0,
+							};
+							let hero_direction = sto_direction.get(hero_id).unwrap();
+							let slash_attack_collider = HalfDiskCollider {
+								radius: SWORD_SLASH_RADIUS,
+								direction: *hero_direction,
+							};
+							let slash_attack_animation = Animation::new(vec!(
+								Frame {
+									up: 0,
+									down: 1,
+									left: 2,
+									right: 3,
+									duration: Duration::from_secs(1),
+								}
+							));
+							let slash_attack_id = entities
+								.build_entity()
+								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
+								.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
+								.with(*hero_direction, &mut sto_direction)
+								.with(slash_attack_collider, &mut sto_disk_arc_collider)
+								.with(slash_attack_animation, &mut sto_animation)
+								.with(Transform::default(), &mut sto_transform)
+								.with(slash_attack_sprite, &mut sto_sprite)
+								.build();
+							hero.state = HeroState::Slashing {
+								slash_attack_id,
+								frames_left: SLASH_FRAMES,
+							};
+						}
+					}
+				},
+				// In the middle of a slash
+				HeroState::Slashing { slash_attack_id, ref mut frames_left } => {
+					// Reduce frames left and return control if finished slashing.
+					*frames_left -= 1;
+					if *frames_left == 0 {
+						hero.state = HeroState::FreelyMoving;
+						entities.delete(slash_attack_id).unwrap();
+					}
 				},
 				// In the middle of a thrust
-				HeroState::Thrusting { sword_attack_id, ref mut frames_left } => {
+				HeroState::Thrusting { thrust_attack_id, ref mut frames_left } => {
 					let hero_direction = sto_direction.get(hero_id).unwrap();
 					// Rush forward.
 					*velocity = match hero_direction {
@@ -197,7 +252,7 @@ impl<'a> System<'a> for HeroControl {
 					*frames_left -= 1;
 					if *frames_left == 0 {
 						hero.state = HeroState::FreelyMoving;
-						entities.delete(sword_attack_id).unwrap();
+						entities.delete(thrust_attack_id).unwrap();
 					}
 				},
 			}

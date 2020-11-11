@@ -13,7 +13,8 @@ use amethyst::{
 pub struct SpriteSheets {
 	pub enemy: Handle<SpriteSheet>,
 	pub hero: Handle<SpriteSheet>,
-	pub sword: Handle<SpriteSheet>,
+	pub slash_attack: Handle<SpriteSheet>,
+	pub thrust_attack: Handle<SpriteSheet>,
 	pub terrain: Handle<SpriteSheet>,
 	pub icons: Handle<Texture>,
 }
@@ -44,7 +45,8 @@ impl SpriteSheets {
 		SpriteSheets {
 			enemy: load_sprite_sheet("arrow"),
 			hero: load_sprite_sheet("arrow"),
-			sword: load_sprite_sheet("sword"),
+			slash_attack: load_sprite_sheet("slash_attack"),
+			thrust_attack: load_sprite_sheet("thrust_attack"),
 			terrain: load_sprite_sheet("terrain"),
 			icons: load_texture("icons"),
 		}

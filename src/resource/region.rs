@@ -2,7 +2,7 @@ use crate::{
 	component::{
 		Animation,
 		behavior::Wander,
-		Collider,
+		collider::RectangleCollider,
 		Direction,
 		Enemy,
 		Frame,
@@ -65,7 +65,7 @@ impl Region {
 		sto_positions: &mut WriteStorage<'a, Position>,
 		sto_velocity: &mut WriteStorage<'a, Velocity>,
 		sto_direction: &mut WriteStorage<'a, Direction>,
-		sto_collider: &mut WriteStorage<'a, Collider>,
+		sto_rectangle_collider: &mut WriteStorage<'a, RectangleCollider>,
 		sto_animation: &mut WriteStorage<'a, Animation>,
 		sto_transform: &mut WriteStorage<'a, Transform>,
 		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
@@ -118,7 +118,7 @@ impl Region {
 					sprite_number: 0,
 				};
 				let enemy_position: Position = enemy_data.location.into();
-				let enemy_collider = Collider {
+				let enemy_collider = RectangleCollider {
 					half_width: 0.5 * TILE_SIZE,
 					half_height: 0.5 * TILE_SIZE,
 				};
@@ -130,7 +130,7 @@ impl Region {
 					.with(enemy_position, sto_positions)
 					.with(Velocity::default(), sto_velocity)
 					.with(Direction::Down, sto_direction)
-					.with(enemy_collider, sto_collider)
+					.with(enemy_collider, sto_rectangle_collider)
 					.with(Animation::new(vec!(
 						Frame {
 							up: 0,
@@ -183,7 +183,7 @@ impl Region {
 		sto_position: &mut WriteStorage<'a, Position>,
 		sto_velocity: &mut WriteStorage<'a, Velocity>,
 		sto_direction: &mut WriteStorage<'a, Direction>,
-		sto_collider: &mut WriteStorage<'a, Collider>,
+		sto_rectangle_collider: &mut WriteStorage<'a, RectangleCollider>,
 		sto_animation: &mut WriteStorage<'a, Animation>,
 		sto_transform: &mut WriteStorage<'a, Transform>,
 		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
@@ -204,7 +204,7 @@ impl Region {
 						sto_position,
 						sto_velocity,
 						sto_direction,
-						sto_collider,
+						sto_rectangle_collider,
 						sto_animation,
 						sto_transform,
 						sto_sprite,
