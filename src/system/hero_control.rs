@@ -146,6 +146,8 @@ impl<'a> System<'a> for HeroControl {
 					}
 					// Check for sword attack.
 					if !self.primary_action_down_last_frame && primary_action_down {
+						let hero_direction = *sto_direction.get(hero_id).unwrap();
+						let hero_position = *sto_position.get(hero_id).unwrap();
 						let advancing = match hero_direction {
 							Direction::Up => vy == 1,
 							Direction::Down => vy == -1,
@@ -157,17 +159,6 @@ impl<'a> System<'a> for HeroControl {
 							let thrust_attack_sprite = SpriteRender {
 								sprite_sheet: sprite_sheets.thrust_attack.clone(),
 								sprite_number: 0,
-							};
-							let hero_direction = sto_direction.get(hero_id).unwrap();
-							let thrust_attack_collider = match hero_direction {
-								Direction::Up | Direction::Down => RectangleCollider {
-									half_width: SWORD_THRUST_HALF_WIDTH,
-									half_height: SWORD_THRUST_HALF_LENGTH,
-								},
-								Direction::Left | Direction::Right => RectangleCollider {
-									half_width: SWORD_THRUST_HALF_LENGTH,
-									half_height: SWORD_THRUST_HALF_WIDTH,
-								},
 							};
 							let thrust_attack_animation = Animation::new(vec!(
 								Frame {
@@ -181,9 +172,9 @@ impl<'a> System<'a> for HeroControl {
 							let thrust_attack_id = entities
 								.build_entity()
 								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
-								.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
-								.with(*hero_direction, &mut sto_direction)
-								.with(thrust_attack_collider, &mut sto_rectangle_collider)
+								.with(hero_position, &mut sto_position)
+								.with(hero_direction, &mut sto_direction)
+								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
 								.with(thrust_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)
 								.with(thrust_attack_sprite, &mut sto_sprite)
@@ -198,10 +189,9 @@ impl<'a> System<'a> for HeroControl {
 								sprite_sheet: sprite_sheets.slash_attack.clone(),
 								sprite_number: 0,
 							};
-							let hero_direction = sto_direction.get(hero_id).unwrap();
 							let slash_attack_collider = HalfDiskCollider {
 								radius: SWORD_SLASH_RADIUS,
-								direction: *hero_direction,
+								direction: hero_direction,
 							};
 							let slash_attack_animation = Animation::new(vec!(
 								Frame {
@@ -215,8 +205,8 @@ impl<'a> System<'a> for HeroControl {
 							let slash_attack_id = entities
 								.build_entity()
 								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
-								.with(Position { x: 0.0, y: 0.0 }, &mut sto_position)
-								.with(*hero_direction, &mut sto_direction)
+								.with(hero_position, &mut sto_position)
+								.with(hero_direction, &mut sto_direction)
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
 								.with(slash_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)

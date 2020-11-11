@@ -1,3 +1,5 @@
+use crate::component::{Direction, Position, collider::RectangleCollider};
+
 use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
 use std::collections::HashSet;
@@ -34,5 +36,31 @@ impl SlashAttack {
 	/// Marks the entity with the given ID as having been hit by this slash attack.
 	pub fn mark_as_hit(&mut self, id: Entity) {
 		self.already_hit_ids.insert(id);
+	}
+
+	/// Computes the position of the attack based on its source's orientation.
+	pub fn compute_position(
+		source_position: &Position,
+		source_direction: &Direction,
+		source_collider: &RectangleCollider,
+	) -> Position {
+		match source_direction {
+			Direction::Up => Position {
+				x: source_position.x,
+				y: source_position.y + source_collider.half_height,
+			},
+			Direction::Down => Position {
+				x: source_position.x,
+				y: source_position.y - source_collider.half_height,
+			},
+			Direction::Left => Position {
+				x: source_position.x - source_collider.half_width,
+				y: source_position.y,
+			},
+			Direction::Right => Position {
+				x: source_position.x + source_collider.half_width,
+				y: source_position.y,
+			},
+		}
 	}
 }

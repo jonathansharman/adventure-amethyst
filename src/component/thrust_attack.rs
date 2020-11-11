@@ -1,3 +1,8 @@
+use crate::{
+	component::{Direction, Position, collider::RectangleCollider},
+	constants::*,
+};
+
 use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
 pub struct ThrustAttack {
@@ -31,5 +36,45 @@ impl ThrustAttack {
 	/// Makes the thrust attack inactive (unable to hit a character).
 	pub fn make_inactive(&mut self) {
 		self.is_active = false;
+	}
+
+	/// Computes the position of the attack based on its source's orientation.
+	pub fn compute_position(
+		source_position: &Position,
+		source_direction: &Direction,
+		source_collider: &RectangleCollider,
+	) -> Position {
+		match source_direction {
+			Direction::Up => Position {
+				x: source_position.x,
+				y: source_position.y + source_collider.half_height + SWORD_THRUST_HALF_LENGTH,
+			},
+			Direction::Down => Position {
+				x: source_position.x,
+				y: source_position.y - source_collider.half_height - SWORD_THRUST_HALF_LENGTH,
+			},
+			Direction::Left => Position {
+				x: source_position.x - source_collider.half_width - SWORD_THRUST_HALF_LENGTH,
+				y: source_position.y,
+			},
+			Direction::Right => Position {
+				x: source_position.x + source_collider.half_width + SWORD_THRUST_HALF_LENGTH,
+				y: source_position.y,
+			},
+		}
+	}
+
+	/// Computes the collider of the attack based on its source's orientation.
+	pub fn compute_collider(source_direction: &Direction) -> RectangleCollider {
+		match source_direction {
+			Direction::Up | Direction::Down => RectangleCollider {
+				half_width: SWORD_THRUST_HALF_WIDTH,
+				half_height: SWORD_THRUST_HALF_LENGTH,
+			},
+			Direction::Left | Direction::Right => RectangleCollider {
+				half_width: SWORD_THRUST_HALF_LENGTH,
+				half_height: SWORD_THRUST_HALF_WIDTH,
+			},
+		}
 	}
 }
