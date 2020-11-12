@@ -37,16 +37,15 @@ impl<'a> System<'a> for HudUpdates {
 		mut sto_ui_transform,
 	): Self::SystemData) {
 		for (_hero, health) in (&sto_hero, &sto_health).join() {
-			if hud.current_hearts > health.current() {
+			if hud.max_hearts > health.max() {
 				// Delete excess heart images.
-				for to_delete in health.current()..hud.current_hearts {
+				for to_delete in health.max()..hud.max_hearts {
 					entities.delete(hud.heart_images[to_delete as usize]).unwrap();
 				}
-				hud.current_hearts = health.current();
-				hud.heart_images.truncate(health.current() as usize);
-			} else if hud.current_hearts < health.current() {
+				hud.heart_images.truncate(health.max() as usize);
+			} else if hud.max_hearts < health.max() {
 				// Add heart images.
-				for i in hud.current_hearts..health.current() {
+				for i in hud.max_hearts..health.max() {
 					const HEARTS_MARGIN_TOP: f32 = 10.0;
 					const HEARTS_MARGIN_LEFT: f32 = 10.0;
 					const HEARTS_PADDING: f32 = 10.0;
@@ -58,8 +57,8 @@ impl<'a> System<'a> for HudUpdates {
 						.with(
 							UiImage::PartialTexture {
 								tex: sprite_sheets.icons.clone(),
-								left: 1.0 / 3.0,
-								right: 2.0 / 3.0,
+								left: 0.0,
+								right: 1.0 / 3.0,
 								bottom: 1.0,
 								top: 0.0,
 							},
@@ -81,7 +80,20 @@ impl<'a> System<'a> for HudUpdates {
 						.build();
 					hud.heart_images.push(heart_image);
 				}
-				hud.current_hearts = health.current();
+			}
+			hud.max_hearts = health.max();
+			// Update heart image sprites.
+			for i in 0..health.current() as usize {
+				if let UiImage::PartialTexture { left, right, .. } = sto_ui_image.get_mut(hud.heart_images[i]).unwrap() {
+					*left = 1.0 / 3.0;
+					*right = 2.0 / 3.0;
+				}
+			}
+			for i in health.current() as usize..health.max() as usize {
+				if let UiImage::PartialTexture { left, right, .. } = sto_ui_image.get_mut(hud.heart_images[i]).unwrap() {
+					*left = 0.0;
+					*right = 1.0 / 3.0;
+				}
 			}
 		}
 	}
