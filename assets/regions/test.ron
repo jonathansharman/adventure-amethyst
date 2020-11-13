@@ -44,4 +44,8 @@ RegionData(
 			location: (row: 3, col: 4),
 		),
 	],
+	heart_locations: [
+		(row: 9, col: 1),
+		(row: 5, col: 9),
+	]
 )

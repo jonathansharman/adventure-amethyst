@@ -21,8 +21,11 @@ impl<'a> System<'a> for Knockback {
 
 	fn run(&mut self, (entities, mut sto_knocked_back, mut sto_velocity): Self::SystemData) {
 		let mut entities_finished_knockback: Vec<Entity> = Vec::new();
-		let components_iter = (&entities, &mut sto_knocked_back, &mut sto_velocity).join();
-		for (entity, knocked_back, velocity) in components_iter {
+		for (entity, knocked_back, velocity) in (
+			&entities,
+			&mut sto_knocked_back,
+			&mut sto_velocity,
+		).join() {
 			*velocity = knocked_back.velocity;
 			knocked_back.frames_left -= 1;
 			if knocked_back.frames_left == 0 {

@@ -3,7 +3,7 @@ use crate::{
 		Health,
 		Hero,
 	},
-	resource::{Hud, SpriteSheets},
+	resource::{Hud, Textures},
 };
 
 use amethyst::{
@@ -20,7 +20,7 @@ impl<'a> System<'a> for HudUpdates {
 	type SystemData = (
 		Entities<'a>,
 		WriteExpect<'a, Hud>,
-		ReadExpect<'a, SpriteSheets>,
+		ReadExpect<'a, Textures>,
 		ReadStorage<'a, Hero>,
 		ReadStorage<'a, Health>,
 		WriteStorage<'a, UiImage>,
@@ -30,7 +30,7 @@ impl<'a> System<'a> for HudUpdates {
 	fn run(&mut self, (
 		entities,
 		mut hud,
-		sprite_sheets,
+		textures,
 		sto_hero,
 		sto_health,
 		mut sto_ui_image,
@@ -56,7 +56,7 @@ impl<'a> System<'a> for HudUpdates {
 						.build_entity()
 						.with(
 							UiImage::PartialTexture {
-								tex: sprite_sheets.icons.clone(),
+								tex: textures.hearts.clone(),
 								left: 0.0,
 								right: 1.0 / 3.0,
 								bottom: 1.0,

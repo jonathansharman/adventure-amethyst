@@ -36,14 +36,13 @@ impl<'a> System<'a> for Animation {
 		mut sto_transform,
 		time,
 	): Self::SystemData) {
-		let components_iter = (
+		for (animation, position, direction, sprite, transform) in (
 			&mut sto_animation,
 			&sto_position,
 			&sto_direction,
 			&mut sto_sprite,
 			&mut sto_transform,
-		).join();
-		for (animation, position, direction, sprite, transform) in components_iter {
+		).join() {
 			// Update animation.
 			animation.advance(time.delta_time());
 			animation.set_direction(*direction);

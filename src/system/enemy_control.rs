@@ -29,14 +29,13 @@ impl<'a> System<'a> for EnemyControl {
 		const STOP_THRESHOLD: f32 = TURN_THRESHOLD + 0.01;
 
 		let mut rng = rand::thread_rng();
-		let components_iter = (
+		for (wander, _no_knocked_back, direction, velocity) in (
 			&mut sto_wander,
 			// No control while being knocked back
 			!&sto_knocked_back,
 			&mut sto_direction,
 			&mut sto_velocity,
-		).join();
-		for (wander, _no_knocked_back, direction, velocity) in components_iter {
+		).join() {
 			// Randomly change wander direction or stop.
 			let p = rng.gen::<f32>();
 			if (0.0..TURN_THRESHOLD).contains(&p) {

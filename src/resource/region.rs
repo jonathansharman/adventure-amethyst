@@ -7,6 +7,7 @@ use crate::{
 		Enemy,
 		Frame,
 		Health,
+		Heart,
 		Position,
 		Terrain,
 		TileCoords,
@@ -38,6 +39,7 @@ pub struct Region {
 	entrances: Vec<Entrance>,
 	exits: Vec<Exit>,
 	enemies: Vec<Entity>,
+	hearts: Vec<Entity>,
 }
 
 impl Region {
@@ -50,6 +52,7 @@ impl Region {
 			entrances: Vec::new(),
 			exits: Vec::new(),
 			enemies: Vec::new(),
+			hearts: Vec::new(),
 		}
 	}
 
@@ -62,8 +65,9 @@ impl Region {
 		sto_terrain: &mut WriteStorage<'a, Terrain>,
 		sto_enemy: &mut WriteStorage<'a, Enemy>,
 		sto_health: &mut WriteStorage<'a, Health>,
+		sto_heart: &mut WriteStorage<'a, Heart>,
 		sto_wander: &mut WriteStorage<'a, Wander>,
-		sto_positions: &mut WriteStorage<'a, Position>,
+		sto_position: &mut WriteStorage<'a, Position>,
 		sto_velocity: &mut WriteStorage<'a, Velocity>,
 		sto_direction: &mut WriteStorage<'a, Direction>,
 		sto_rectangle_collider: &mut WriteStorage<'a, RectangleCollider>,
@@ -78,6 +82,10 @@ impl Region {
 		for enemy_id in self.enemies.iter() {
 			// This may fail if the enemy is dead; ignore the error.
 			entities.delete(*enemy_id).unwrap_or_default();
+		}
+		for heart_id in self.hearts.iter() {
+			// This may fail if the heart has been collected; ignore the error.
+			entities.delete(*heart_id).unwrap_or_default();
 		}
 
 		// Load region data from file.
@@ -128,7 +136,7 @@ impl Region {
 					.with(Enemy, sto_enemy)
 					.with(Health::new(ENEMY_BASE_HEALTH), sto_health)
 					.with(Wander { direction: rand::thread_rng().gen() }, sto_wander)
-					.with(enemy_position, sto_positions)
+					.with(enemy_position, sto_position)
 					.with(Velocity::default(), sto_velocity)
 					.with(Direction::Down, sto_direction)
 					.with(enemy_collider, sto_rectangle_collider)
@@ -147,6 +155,39 @@ impl Region {
 				enemy
 			})
 			.collect();
+		// Generate hearts.
+		let hearts = region_data.heart_locations.into_iter()
+			.map(|heart_location| {
+				let sprite = SpriteRender {
+					sprite_sheet: sprite_sheets.hearts.clone(),
+					sprite_number: 1,
+				};
+				let heart_position: Position = heart_location.into();
+				let heart_collider = RectangleCollider {
+					half_width: 0.5 * HEART_WIDTH,
+					half_height: 0.5 * HEART_HEIGHT,
+				};
+				let heart = entities
+					.build_entity()
+					.with(Heart, sto_heart)
+					.with(heart_position, sto_position)
+					.with(Direction::Down, sto_direction)
+					.with(heart_collider, sto_rectangle_collider)
+					.with(Animation::new(vec!(
+						Frame {
+							up: 1,
+							down: 1,
+							left: 1,
+							right: 1,
+							duration: Duration::from_secs(1),
+						}
+					)), sto_animation)
+					.with(Transform::default(), sto_transform)
+					.with(sprite, sto_sprite)
+					.build();
+				heart
+			})
+			.collect();
 		// Assign to fields.
 		self.row_count = row_count;
 		self.col_count = col_count;
@@ -154,6 +195,7 @@ impl Region {
 		self.entrances = region_data.entrances;
 		self.exits = region_data.exits;
 		self.enemies = enemies;
+		self.hearts = hearts;
 	}
 
 	/// Places `entity` at the entrance at index `entrance_idx`.
@@ -180,6 +222,7 @@ impl Region {
 		sto_terrain: &mut WriteStorage<'a, Terrain>,
 		sto_enemy: &mut WriteStorage<'a, Enemy>,
 		sto_health: &mut WriteStorage<'a, Health>,
+		sto_heart: &mut WriteStorage<'a, Heart>,
 		sto_wander: &mut WriteStorage<'a, Wander>,
 		sto_position: &mut WriteStorage<'a, Position>,
 		sto_velocity: &mut WriteStorage<'a, Velocity>,
@@ -201,6 +244,7 @@ impl Region {
 						sto_terrain,
 						sto_enemy,
 						sto_health,
+						sto_heart,
 						sto_wander,
 						sto_position,
 						sto_velocity,
@@ -254,6 +298,7 @@ struct RegionData {
 	entrances: Vec<Entrance>,
 	exits: Vec<Exit>,
 	enemies: Vec<EnemyData>,
+	heart_locations: Vec<TileCoords>,
 }
 
 /// An entrance to a region.

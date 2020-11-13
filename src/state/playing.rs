@@ -7,6 +7,7 @@ use crate::{
 		Enemy,
 		Frame,
 		Health,
+		Heart,
 		Hero,
 		HeroState,
 		Position,
@@ -19,6 +20,7 @@ use crate::{
 		Hud,
 		Region,
 		SpriteSheets,
+		Textures,
 	},
 };
 
@@ -47,8 +49,9 @@ impl SimpleState for Playing {
 		world.register::<Terrain>();
 		world.register::<Velocity>();
 
-		// Load sprite sheets.
-		let sprite_sheets = SpriteSheets::new(&world);
+		// Load textures and sprite sheets.
+		let textures = Textures::new(&world);
+		let sprite_sheets = SpriteSheets::new(&world, &textures);
 
 		// Create hero (player character).
 		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
@@ -91,6 +94,7 @@ impl SimpleState for Playing {
 			&mut world.write_storage::<Terrain>(),
 			&mut world.write_storage::<Enemy>(),
 			&mut world.write_storage::<Health>(),
+			&mut world.write_storage::<Heart>(),
 			&mut world.write_storage::<Wander>(),
 			&mut world.write_storage::<Position>(),
 			&mut world.write_storage::<Velocity>(),
@@ -112,7 +116,8 @@ impl SimpleState for Playing {
 		// Insert the region into the world.
 		world.insert(region);
 
-		// Insert the sprite container into the world.
+		// Insert textures and sprite sheets into the world.
+		world.insert(textures);
 		world.insert(sprite_sheets);
 
 		// Create and insert HUD.

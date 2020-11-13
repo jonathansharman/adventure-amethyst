@@ -88,14 +88,13 @@ impl<'a> System<'a> for HeroControl {
 
 		let primary_action_down = input.action_is_down(&Actions::Primary).unwrap_or(false);
 
-		let components_iter = (
+		for (hero_id, hero, _no_knocked_back, velocity) in (
 			&entities,
 			&mut sto_hero,
 			// No control while being knocked back
 			!&sto_knock_back,
 			&mut sto_velocity,
-		).join();
-		for (hero_id, hero, _no_knocked_back, velocity) in components_iter {
+		).join() {
 			match hero.state {
 				// Free for player to control
 				HeroState::FreelyMoving => {

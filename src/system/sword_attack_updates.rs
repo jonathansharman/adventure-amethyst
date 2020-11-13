@@ -6,7 +6,6 @@ use crate::{
 		SlashAttack,
 		ThrustAttack,
 	},
-	constants::*,
 };
 
 use amethyst::{
@@ -43,8 +42,11 @@ impl<'a> System<'a> for SwordAttackUpdates {
 	): Self::SystemData) {
 		// Slash attack updates.
 		// Note: we can't borrow all components via join because we also need to borrow source components.
-		let components_iter = (&entities, &sto_slash_attack, &mut sto_transform).join();
-		for (slash_attack_id, slash_attack, sword_transform) in components_iter {
+		for (slash_attack_id, slash_attack, sword_transform) in (
+			&entities,
+			&sto_slash_attack,
+			&mut sto_transform,
+		).join() {
 			let source_id = slash_attack.source_id();
 			// If source no longer exists, delete this attack.
 			if !entities.is_alive(source_id) {
@@ -71,8 +73,11 @@ impl<'a> System<'a> for SwordAttackUpdates {
 
 		// Thrust attack updates.
 		// Note: we can't borrow all components via join because we also need to borrow source components.
-		let components_iter = (&entities, &sto_thrust_attack, &mut sto_transform).join();
-		for (thrust_attack_id, thrust_attack, sword_transform) in components_iter {
+		for (thrust_attack_id, thrust_attack, sword_transform) in (
+			&entities,
+			&sto_thrust_attack,
+			&mut sto_transform,
+		).join() {
 			let source_id = thrust_attack.source_id();
 			// If source no longer exists, delete this attack.
 			if !entities.is_alive(source_id) {
