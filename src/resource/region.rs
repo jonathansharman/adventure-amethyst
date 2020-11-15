@@ -2,6 +2,7 @@ use crate::{
 	component::{
 		Animation,
 		behavior::Wander,
+		Character,
 		collider::RectangleCollider,
 		Direction,
 		Enemy,
@@ -64,6 +65,7 @@ impl Region {
 		sprite_sheets: &SpriteSheets,
 		sto_terrain: &mut WriteStorage<'a, Terrain>,
 		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_character: &mut WriteStorage<'a, Character>,
 		sto_health: &mut WriteStorage<'a, Health>,
 		sto_heart: &mut WriteStorage<'a, Heart>,
 		sto_wander: &mut WriteStorage<'a, Wander>,
@@ -134,6 +136,7 @@ impl Region {
 				let enemy = entities
 					.build_entity()
 					.with(Enemy, sto_enemy)
+					.with(Character, sto_character)
 					.with(Health::new(ENEMY_BASE_HEALTH), sto_health)
 					.with(Wander { direction: rand::thread_rng().gen() }, sto_wander)
 					.with(enemy_position, sto_position)
@@ -221,6 +224,7 @@ impl Region {
 		sprite_sheets: &SpriteSheets,
 		sto_terrain: &mut WriteStorage<'a, Terrain>,
 		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_character: &mut WriteStorage<'a, Character>,
 		sto_health: &mut WriteStorage<'a, Health>,
 		sto_heart: &mut WriteStorage<'a, Heart>,
 		sto_wander: &mut WriteStorage<'a, Wander>,
@@ -243,6 +247,7 @@ impl Region {
 						sprite_sheets,
 						sto_terrain,
 						sto_enemy,
+						sto_character,
 						sto_health,
 						sto_heart,
 						sto_wander,

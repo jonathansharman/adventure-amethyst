@@ -1,5 +1,6 @@
 mod animation;
 pub mod behavior;
+mod character;
 pub mod collider;
 mod direction;
 mod enemy;
@@ -14,6 +15,7 @@ mod terrain;
 mod velocity;
 
 pub use animation::{Animation, Frame};
+pub use character::Character;
 pub use direction::Direction;
 pub use enemy::Enemy;
 pub use health::Health;

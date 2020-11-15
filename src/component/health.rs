@@ -30,14 +30,14 @@ impl Health {
 	}
 
 	/// Decrease health by `amount`, to a minimum of 0.
-	pub fn damage(&mut self, amount: i32) {
+	pub fn damage(&mut self, amount: u32) {
 		log::info!("Took {} damage!", amount);
-		self.current = i32::max(0, self.current - amount);
+		self.current = i32::max(0, self.current - amount as i32);
 	}
 
 	/// Increase health by `amount`, up to the maximum.
-	pub fn heal(&mut self, amount: i32) {
+	pub fn heal(&mut self, amount: u32) {
 		log::info!("Healed for {}!", amount);
-		self.current = i32::min(self.max, self.current + amount);
+		self.current = i32::min(self.max, self.current + amount as i32);
 	}
 }

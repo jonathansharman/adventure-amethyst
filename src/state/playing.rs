@@ -2,6 +2,7 @@ use crate::{
 	component::{
 		Animation,
 		behavior::Wander,
+		Character,
 		collider::RectangleCollider,
 		Direction,
 		Enemy,
@@ -62,6 +63,7 @@ impl SimpleState for Playing {
 		let hero = world
 			.create_entity()
 			.with(Hero { state: HeroState::FreelyMoving })
+			.with(Character)
 			.with(Health::new(HERO_BASE_HEALTH))
 			.with(hero_position)
 			.with(Velocity::default())
@@ -93,6 +95,7 @@ impl SimpleState for Playing {
 			&sprite_sheets,
 			&mut world.write_storage::<Terrain>(),
 			&mut world.write_storage::<Enemy>(),
+			&mut world.write_storage::<Character>(),
 			&mut world.write_storage::<Health>(),
 			&mut world.write_storage::<Heart>(),
 			&mut world.write_storage::<Wander>(),
