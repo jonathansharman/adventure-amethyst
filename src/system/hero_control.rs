@@ -77,7 +77,7 @@ impl<'a> System<'a> for HeroControl {
 		mut sto_disk_arc_collider,
 		mut sto_animation,
 		mut sto_transform,
-		mut sto_sprite,
+		mut sto_sprite_render,
 	): Self::SystemData) {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
@@ -176,7 +176,7 @@ impl<'a> System<'a> for HeroControl {
 								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
 								.with(thrust_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)
-								.with(thrust_attack_sprite, &mut sto_sprite)
+								.with(thrust_attack_sprite, &mut sto_sprite_render)
 								.build();
 							hero.state = HeroState::Thrusting {
 								thrust_attack_id: thrust_attack_id,
@@ -209,7 +209,7 @@ impl<'a> System<'a> for HeroControl {
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
 								.with(slash_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)
-								.with(slash_attack_sprite, &mut sto_sprite)
+								.with(slash_attack_sprite, &mut sto_sprite_render)
 								.build();
 							hero.state = HeroState::Slashing {
 								slash_attack_id,
@@ -229,13 +229,18 @@ impl<'a> System<'a> for HeroControl {
 				},
 				// In the middle of a thrust
 				HeroState::Thrusting { thrust_attack_id, ref mut frames_left } => {
+					let thrust_attack = sto_thrust_attack.get_mut(thrust_attack_id).unwrap();
 					let hero_direction = sto_direction.get(hero_id).unwrap();
-					// Rush forward.
-					*velocity = match hero_direction {
-						Direction::Up => Velocity { x: 0.0, y: THRUST_SPEED },
-						Direction::Down => Velocity { x: 0.0, y: -THRUST_SPEED },
-						Direction::Left => Velocity { x: -THRUST_SPEED, y: 0.0 },
-						Direction::Right => Velocity { x: THRUST_SPEED, y: 0.0 },
+					// Rush forward if the thrust is active.
+					*velocity = if thrust_attack.is_active() {
+						match hero_direction {
+							Direction::Up => Velocity { x: 0.0, y: THRUST_SPEED },
+							Direction::Down => Velocity { x: 0.0, y: -THRUST_SPEED },
+							Direction::Left => Velocity { x: -THRUST_SPEED, y: 0.0 },
+							Direction::Right => Velocity { x: THRUST_SPEED, y: 0.0 },
+						}
+					} else {
+						Velocity { x: 0.0, y: 0.0 }
 					};
 					// Reduce frames left and return control if finished thrusting.
 					*frames_left -= 1;

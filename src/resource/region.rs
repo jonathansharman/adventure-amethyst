@@ -9,9 +9,13 @@ use crate::{
 		Frame,
 		Health,
 		Heart,
+		Hero,
+		HeroState,
 		Position,
+		SlashAttack,
 		Terrain,
 		TileCoords,
+		ThrustAttack,
 		Velocity,
 	},
 	constants::*,
@@ -20,7 +24,7 @@ use crate::{
 
 use amethyst::{
 	core::Transform,
-	ecs::{Entity, Entities, ReadStorage, WriteStorage},
+	ecs::{Entity, Entities, Join, ReadStorage, WriteStorage},
 	renderer::SpriteRender,
 };
 use nalgebra::Vector3;
@@ -63,19 +67,19 @@ impl Region {
 		filename: &str,
 		entities: &Entities<'a>,
 		sprite_sheets: &SpriteSheets,
-		sto_terrain: &mut WriteStorage<'a, Terrain>,
-		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_animation: &mut WriteStorage<'a, Animation>,
 		sto_character: &mut WriteStorage<'a, Character>,
+		sto_direction: &mut WriteStorage<'a, Direction>,
+		sto_enemy: &mut WriteStorage<'a, Enemy>,
 		sto_health: &mut WriteStorage<'a, Health>,
 		sto_heart: &mut WriteStorage<'a, Heart>,
-		sto_wander: &mut WriteStorage<'a, Wander>,
 		sto_position: &mut WriteStorage<'a, Position>,
-		sto_velocity: &mut WriteStorage<'a, Velocity>,
-		sto_direction: &mut WriteStorage<'a, Direction>,
 		sto_rectangle_collider: &mut WriteStorage<'a, RectangleCollider>,
-		sto_animation: &mut WriteStorage<'a, Animation>,
+		sto_sprite_render: &mut WriteStorage<'a, SpriteRender>,
+		sto_terrain: &mut WriteStorage<'a, Terrain>,
 		sto_transform: &mut WriteStorage<'a, Transform>,
-		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
+		sto_velocity: &mut WriteStorage<'a, Velocity>,
+		sto_wander: &mut WriteStorage<'a, Wander>,
 	) {
 		// Delete current entities.
 		for tile in self.tiles.iter() {
@@ -117,7 +121,7 @@ impl Region {
 				.build_entity()
 				.with(terrain, sto_terrain)
 				.with(tile_transform, sto_transform)
-				.with(sprite, sto_sprite)
+				.with(sprite, sto_sprite_render)
 				.build();
 			tiles.push(tile);
 		}
@@ -153,7 +157,7 @@ impl Region {
 						}
 					)), sto_animation)
 					.with(Transform::default(), sto_transform)
-					.with(sprite, sto_sprite)
+					.with(sprite, sto_sprite_render)
 					.build();
 				enemy
 			})
@@ -186,7 +190,7 @@ impl Region {
 						}
 					)), sto_animation)
 					.with(Transform::default(), sto_transform)
-					.with(sprite, sto_sprite)
+					.with(sprite, sto_sprite_render)
 					.build();
 				heart
 			})
@@ -216,27 +220,30 @@ impl Region {
 		*sto_direction.get_mut(entity).unwrap() = entrance.direction;
 	}
 
-	/// Causes `entity` to take the exit it is standing on, if any.
+	/// Causes a hero to take the exit it is standing on, if any.
 	pub fn take_exit<'a>(
 		&mut self,
-		entity: Entity,
+		hero_id: Entity,
+		hero: &mut Hero,
 		entities: &Entities<'a>,
 		sprite_sheets: &SpriteSheets,
-		sto_terrain: &mut WriteStorage<'a, Terrain>,
-		sto_enemy: &mut WriteStorage<'a, Enemy>,
+		sto_animation: &mut WriteStorage<'a, Animation>,
 		sto_character: &mut WriteStorage<'a, Character>,
+		sto_direction: &mut WriteStorage<'a, Direction>,
+		sto_enemy: &mut WriteStorage<'a, Enemy>,
 		sto_health: &mut WriteStorage<'a, Health>,
 		sto_heart: &mut WriteStorage<'a, Heart>,
-		sto_wander: &mut WriteStorage<'a, Wander>,
 		sto_position: &mut WriteStorage<'a, Position>,
-		sto_velocity: &mut WriteStorage<'a, Velocity>,
-		sto_direction: &mut WriteStorage<'a, Direction>,
 		sto_rectangle_collider: &mut WriteStorage<'a, RectangleCollider>,
-		sto_animation: &mut WriteStorage<'a, Animation>,
+		sto_slash_attack: &ReadStorage<'a, SlashAttack>,
+		sto_sprite_render: &mut WriteStorage<'a, SpriteRender>,
+		sto_terrain: &mut WriteStorage<'a, Terrain>,
+		sto_thrust_attack: &ReadStorage<'a, ThrustAttack>,
 		sto_transform: &mut WriteStorage<'a, Transform>,
-		sto_sprite: &mut WriteStorage<'a, SpriteRender>,
+		sto_velocity: &mut WriteStorage<'a, Velocity>,
+		sto_wander: &mut WriteStorage<'a, Wander>,
 	) {
-		let position = sto_position.get(entity);
+		let position = sto_position.get(hero_id);
 		let tile_coords: Option<TileCoords> = position.and_then(|position| (*position).into());
 		if let Some(tile_coords) = tile_coords {
 			for exit in self.exits.clone() {
@@ -245,21 +252,29 @@ impl Region {
 						&exit.target_region,
 						entities,
 						sprite_sheets,
-						sto_terrain,
-						sto_enemy,
+						sto_animation,
 						sto_character,
+						sto_direction,
+						sto_enemy,
 						sto_health,
 						sto_heart,
-						sto_wander,
 						sto_position,
-						sto_velocity,
-						sto_direction,
 						sto_rectangle_collider,
-						sto_animation,
+						sto_sprite_render,
+						sto_terrain,
 						sto_transform,
-						sto_sprite,
+						sto_velocity,
+						sto_wander,
 					);
-					self.place_at_entrance(entity, exit.target_entrance_idx, sto_position, sto_direction);
+					self.place_at_entrance(hero_id, exit.target_entrance_idx, sto_position, sto_direction);
+					// Clear any attacks and reset the hero's state.
+					for (slash_attack_id, _slash_attack) in (entities, sto_slash_attack).join() {
+						entities.delete(slash_attack_id).unwrap();
+					}
+					for (thrust_attack_id, _thrust_attack) in (entities, sto_thrust_attack).join() {
+						entities.delete(thrust_attack_id).unwrap();
+					}
+					hero.state = HeroState::FreelyMoving;
 					return;
 				}
 			}

@@ -59,7 +59,11 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		// Handle thrust attacks against enemies.
 		let mut max_overlap_area = 0.0;
 		let mut closest_colliding_enemy_id_and_position = None;
-		for (thrust_attack, thrust_attack_collider, thrust_attack_position) in (
+		for (
+			thrust_attack,
+			thrust_attack_collider,
+			thrust_attack_position,
+		) in (
 			&mut sto_thrust_attack,
 			&sto_rectangle_collider,
 			&sto_position,

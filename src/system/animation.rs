@@ -32,7 +32,7 @@ impl<'a> System<'a> for Animation {
 		mut sto_animation,
 		sto_position,
 		sto_direction,
-		mut sto_sprite,
+		mut sto_sprite_render,
 		mut sto_transform,
 		time,
 	): Self::SystemData) {
@@ -40,7 +40,7 @@ impl<'a> System<'a> for Animation {
 			&mut sto_animation,
 			&sto_position,
 			&sto_direction,
-			&mut sto_sprite,
+			&mut sto_sprite_render,
 			&mut sto_transform,
 		).join() {
 			// Update animation.
