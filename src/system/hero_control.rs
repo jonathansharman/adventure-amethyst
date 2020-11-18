@@ -24,6 +24,7 @@ use amethyst::{
 	input::InputHandler,
 	renderer::SpriteRender,
 	shred::{Read},
+	utils::removal::Removal,
 };
 
 use std::convert::TryFrom;
@@ -48,6 +49,7 @@ impl<'a> System<'a> for HeroControl {
 		Read<'a, InputHandler<InputBindings>>,
 		Entities<'a>,
 		ReadExpect<'a, SpriteSheets>,
+		WriteStorage<'a, Removal<i32>>,
 		WriteStorage<'a, Hero>,
 		ReadStorage<'a, KnockedBack>,
 		WriteStorage<'a, Position>,
@@ -66,6 +68,7 @@ impl<'a> System<'a> for HeroControl {
 		input,
 		entities,
 		sprite_sheets,
+		mut sto_removal,
 		mut sto_hero,
 		sto_knock_back,
 		mut sto_position,
@@ -170,6 +173,7 @@ impl<'a> System<'a> for HeroControl {
 							));
 							let thrust_attack_id = entities
 								.build_entity()
+								.with(Removal::new(0), &mut sto_removal)
 								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
@@ -203,6 +207,7 @@ impl<'a> System<'a> for HeroControl {
 							));
 							let slash_attack_id = entities
 								.build_entity()
+								.with(Removal::new(0), &mut sto_removal)
 								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)

@@ -20,7 +20,8 @@ pub struct SpriteSheets {
 }
 
 impl SpriteSheets {
-	pub fn new(world: &World, textures: &Textures) -> Self {
+	pub fn new(world: &World) -> Self {
+		let textures = world.read_resource::<Textures>();
 		let loader = world.read_resource::<Loader>();
 		let sprite_sheet_storage = &world.read_resource::<AssetStorage<SpriteSheet>>();
 		let load_sprite_sheet = |name, texture_handle| {

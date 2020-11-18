@@ -52,8 +52,6 @@ fn main() -> amethyst::Result<()> {
 		.with_barrier()
 		.with(Motion, "motion", &[])
 		.with_barrier()
-		.with(Travel, "travel", &[])
-		.with_barrier()
 		.with(StaticCollisionDetection, "static_collision_detection", &[])
 		.with_barrier()
 		.with(DynamicCollisionDetection, "dynamic_collision_detection", &[])

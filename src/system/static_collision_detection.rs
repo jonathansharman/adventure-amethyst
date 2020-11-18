@@ -7,7 +7,7 @@ use crate::{
 		Terrain,
 	},
 	constants::*,
-	resource::Region,
+	resource::CurrentRegion,
 };
 
 use amethyst::{
@@ -21,7 +21,7 @@ pub struct StaticCollisionDetection;
 
 impl<'a> System<'a> for StaticCollisionDetection {
 	type SystemData = (
-		ReadExpect<'a, Region>,
+		ReadExpect<'a, CurrentRegion>,
 		ReadStorage<'a, Character>,
 		ReadStorage<'a, RectangleCollider>,
 		ReadStorage<'a, Terrain>,
@@ -29,7 +29,7 @@ impl<'a> System<'a> for StaticCollisionDetection {
 	);
 
 	fn run(&mut self, (
-		region,
+		current_region,
 		sto_character,
 		sto_rectangle_collider,
 		sto_terrain,
@@ -63,7 +63,7 @@ impl<'a> System<'a> for StaticCollisionDetection {
 
 			// Detect collisions with the surrounding walls in each diagonal direction.
 			let is_wall = |x, y| {
-				region.terrain_at_position(&sto_terrain, Position { x, y })
+				current_region.get().terrain_at_position(&sto_terrain, Position { x, y })
 					.map_or(false, |terrain| terrain.blocks_movement())
 			};
 			let bottom_left = is_wall(low.x, low.y);

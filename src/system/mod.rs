@@ -9,7 +9,6 @@ mod knockback;
 mod motion;
 mod static_collision_detection;
 mod sword_attack_updates;
-mod travel;
 
 pub use animation::Animation;
 pub use camera_control::CameraControl;
@@ -22,4 +21,3 @@ pub use knockback::Knockback;
 pub use motion::Motion;
 pub use static_collision_detection::StaticCollisionDetection;
 pub use sword_attack_updates::SwordAttackUpdates;
-pub use travel::Travel;

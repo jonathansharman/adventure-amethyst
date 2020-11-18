@@ -13,13 +13,16 @@ use crate::{
 		HeroState,
 		Position,
 		Terrain,
+		TileCoords,
 		Velocity,
 	},
 	constants::*,
 	resource::{
 		Camera,
+		CurrentRegion,
 		Hud,
 		Region,
+		RegionData,
 		SpriteSheets,
 		Textures,
 	},
@@ -27,8 +30,10 @@ use crate::{
 
 use amethyst::{
 	core::transform::Transform,
+	ecs::{Entity, Join},
 	prelude::*,
 	renderer::{Camera as AmethystCamera, SpriteRender},
+	utils::removal::{exec_removal, Removal},
 	window::ScreenDimensions,
 	winit::{
 		dpi::LogicalSize,
@@ -36,7 +41,10 @@ use amethyst::{
 		WindowEvent,
 	},
 };
+use rand::Rng;
+use ron::de::from_reader;
 
+use std::fs::File;
 use std::time::Duration;
 
 /// The main gameplay state.
@@ -45,14 +53,17 @@ pub struct Playing;
 impl SimpleState for Playing {
 	fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
 		let world = data.world;
-
+		
 		// Register required components.
 		world.register::<Terrain>();
 		world.register::<Velocity>();
 
 		// Load textures and sprite sheets.
-		let textures = Textures::new(&world);
-		let sprite_sheets = SpriteSheets::new(&world, &textures);
+		world.insert(Textures::new(&world));
+		world.insert(SpriteSheets::new(&world));
+
+		// Create a current region manager.
+		world.insert(CurrentRegion::new());
 
 		// Create hero (player character).
 		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
@@ -60,6 +71,7 @@ impl SimpleState for Playing {
 			half_width: 0.5 * TILE_SIZE,
 			half_height: 0.5 * TILE_SIZE,
 		};
+		let hero_sprite_sheet = world.read_resource::<SpriteSheets>().hero.clone();
 		let hero = world
 			.create_entity()
 			.with(Hero { state: HeroState::FreelyMoving })
@@ -80,48 +92,16 @@ impl SimpleState for Playing {
 			)))
 			.with(Transform::default())
 			.with(SpriteRender {
-				sprite_sheet: sprite_sheets.hero.clone(),
+				sprite_sheet: hero_sprite_sheet,
 				sprite_number: 0,
 			})
 			.build();
 
-		// Create region.
-		let mut region = Region::new();
-
 		// Load starting region.
-		region.load(
-			"test.ron",
-			&world.entities(),
-			&sprite_sheets,
-			&mut world.write_storage::<Animation>(),
-			&mut world.write_storage::<Character>(),
-			&mut world.write_storage::<Direction>(),
-			&mut world.write_storage::<Enemy>(),
-			&mut world.write_storage::<Health>(),
-			&mut world.write_storage::<Heart>(),
-			&mut world.write_storage::<Position>(),
-			&mut world.write_storage::<RectangleCollider>(),
-			&mut world.write_storage::<SpriteRender>(),
-			&mut world.write_storage::<Terrain>(),
-			&mut world.write_storage::<Transform>(),
-			&mut world.write_storage::<Velocity>(),
-			&mut world.write_storage::<Wander>(),
-		);
+		load_region("test.ron", world);
 
-		// Move hero to the region's first entrance.
-		region.place_at_entrance(
-			hero,
-			1,
-			&mut world.write_storage::<Position>(),
-			&mut world.write_storage::<Direction>(),
-		);
-
-		// Insert the region into the world.
-		world.insert(region);
-
-		// Insert textures and sprite sheets into the world.
-		world.insert(textures);
-		world.insert(sprite_sheets);
+		// Move hero to the region's second entrance.
+		place_at_entrance(hero, 1, world);
 
 		// Create and insert HUD.
 		world.insert(Hud::new());
@@ -152,9 +132,46 @@ impl SimpleState for Playing {
 		}
 		Trans::None
 	}
+
+	fn fixed_update(&mut self, data: StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+		let world = data.world;
+		let exits = world.read_resource::<CurrentRegion>().get().exits().clone();
+		// See if a hero is on an exit.
+		let mut hero_id_exit = None;
+		for (hero_id, _hero, hero_position) in (
+			&*world.entities(),
+			&world.read_storage::<Hero>(),
+			&world.read_storage::<Position>(),
+		).join() {
+			let tile_coords: Option<TileCoords> = (*hero_position).into();
+			if let Some(tile_coords) = tile_coords {
+				for exit in &exits {
+					if exit.location == tile_coords {
+						hero_id_exit = Some((hero_id, exit.clone()));
+						break;
+					}
+				}
+			}
+			if hero_id_exit.is_some() {
+				break;
+			}
+		}
+		// If so, take the exit.
+		if let Some((hero_id, exit)) = hero_id_exit {
+			// Remove all entities associated with the current region.
+			exec_removal(&*world.entities(), &world.read_storage::<Removal<i32>>(), 0);
+			// Load the target region.
+			load_region(&exit.target_region, world);
+			// Place the player at the target entrance.
+			place_at_entrance(hero_id, exit.target_entrance_idx, world);
+			// Reset the hero's state.
+			world.write_storage::<Hero>().get_mut(hero_id).unwrap().state = HeroState::FreelyMoving;
+		}
+		Trans::None
+	}
 }
 
-/// Adds the camera resource.
+/// Adds a camera resource to the world.
 fn add_camera(world: &mut World) {
 	let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 	let mut transform = Transform::default();
@@ -165,4 +182,100 @@ fn add_camera(world: &mut World) {
 		.with(transform)
 		.build();
 	world.insert(Camera { id: camera_id });
+}
+
+/// Loads a region from `filename` within the `assets/regions` directory.
+fn load_region(filename: &str, world: &mut World) {
+	// Load region data from file.
+	let path = format!("assets/regions/{}", filename);
+	let file = File::open(&path).expect("Could not open region file");
+	let region_data: RegionData = from_reader(file).expect("Error in region file");
+
+	// Load the region itself.
+	let region = Region::new(
+		region_data.col_count,
+		region_data.terrain,
+		region_data.entrances,
+		region_data.exits,
+		world,
+	);
+	world.write_resource::<CurrentRegion>().set(region);
+
+	// Generate enemies.
+	for enemy_data in region_data.enemies {
+		let sprite = SpriteRender {
+			sprite_sheet: world.read_resource::<SpriteSheets>().enemy.clone(),
+			sprite_number: 0,
+		};
+		let enemy_position: Position = enemy_data.location.into();
+		let enemy_collider = RectangleCollider {
+			half_width: 0.5 * TILE_SIZE,
+			half_height: 0.5 * TILE_SIZE,
+		};
+		world
+			.create_entity()
+			.with(Removal::new(0))
+			.with(Enemy)
+			.with(Character)
+			.with(Health::new(ENEMY_BASE_HEALTH))
+			.with(Wander { direction: rand::thread_rng().gen() })
+			.with(enemy_position)
+			.with(Velocity::default())
+			.with(Direction::Down)
+			.with(enemy_collider)
+			.with(Animation::new(vec!(
+				Frame {
+					up: 0,
+					down: 1,
+					left: 2,
+					right: 3,
+					duration: Duration::from_secs(1),
+				}
+			)))
+			.with(Transform::default())
+			.with(sprite)
+			.build();
+	}
+
+	// Generate hearts.
+	for heart_location in region_data.heart_locations {
+		let sprite = SpriteRender {
+			sprite_sheet: world.read_resource::<SpriteSheets>().hearts.clone(),
+			sprite_number: 1,
+		};
+		let heart_position: Position = heart_location.into();
+		let heart_collider = RectangleCollider {
+			half_width: 0.5 * HEART_WIDTH,
+			half_height: 0.5 * HEART_HEIGHT,
+		};
+		world
+			.create_entity()
+			.with(Removal::new(0))
+			.with(Heart)
+			.with(heart_position)
+			.with(Direction::Down)
+			.with(heart_collider)
+			.with(Animation::new(vec!(
+				Frame {
+					up: 1,
+					down: 1,
+					left: 1,
+					right: 1,
+					duration: Duration::from_secs(1),
+				}
+			)))
+			.with(Transform::default())
+			.with(sprite)
+			.build();
+	}
+}
+
+/// Places `entity` at the entrance of the current region at index `entrance_idx`.
+fn place_at_entrance(entity: Entity, entrance_idx: usize, world: &mut World) {
+	let entrance = world.read_resource::<CurrentRegion>().get().entrances()[entrance_idx];
+	let mut sto_position = world.write_storage::<Position>();
+	let position = sto_position.get_mut(entity).unwrap();
+	position.x = entrance.location.col as f32 * TILE_SIZE;
+	position.y = entrance.location.row as f32 * -TILE_SIZE;
+	*world.write_storage::<Direction>().get_mut(entity).unwrap() = entrance.direction;
 }
