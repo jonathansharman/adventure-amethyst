@@ -10,13 +10,12 @@ use crate::{
 		Health,
 		Heart,
 		Hero,
+		Invulnerable,
 		KnockedBack,
 		Position,
 		SlashAttack,
 		ThrustAttack,
-		Velocity,
 	},
-	constants::*,
 };
 
 use amethyst::{
@@ -41,6 +40,7 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		WriteStorage<'a, Health>,
 		WriteStorage<'a, Heart>,
 		WriteStorage<'a, KnockedBack>,
+		WriteStorage<'a, Invulnerable>,
 	);
 
 	fn run(&mut self, (
@@ -55,6 +55,7 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		mut sto_health,
 		sto_heart,
 		mut sto_knocked_back,
+		mut sto_invulnerable,
 	): Self::SystemData) {
 		// Handle thrust attacks against enemies.
 		let mut max_overlap_area = 0.0;
@@ -79,10 +80,6 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 				&sto_rectangle_collider,
 				&sto_position,
 			).join() {
-				// Ignore collisions with knocked back enemies.
-				if sto_knocked_back.contains(enemy_id) {
-					continue;
-				}
 				let overlap_area = rect_rect_intersection_area(
 					(&thrust_attack_collider, &thrust_attack_position),
 					(&enemy_collider, &enemy_position),
@@ -94,25 +91,8 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 			}
 			// If any enemies were close enough for a collision, damage and knock back the closest one.
 			if let Some((enemy_id, enemy_position)) = closest_colliding_enemy_id_and_position {
-				// Compute heading of velocity based on displacement from the thrust to the enemy.
-				let mut velocity = Velocity {
-					x: enemy_position.x - thrust_attack_position.x,
-					y: enemy_position.y - thrust_attack_position.y,
-				};
-				// Normalize knockback to a set speed.
-				if velocity.x != 0.0 || velocity.y != 0.0 {
-					let magnitude = f32::sqrt(velocity.x.powi(2) + velocity.y.powi(2));
-					velocity.x *= KNOCKBACK_SPEED / magnitude;
-					velocity.y *= KNOCKBACK_SPEED / magnitude;
-				} else {
-					// The thrust is directly on top of the enemy. Knock towards the right arbitrarily.
-					velocity.x = KNOCKBACK_SPEED;
-				}
-				sto_knocked_back.insert(enemy_id, KnockedBack {
-					frames_left: KNOCKBACK_FRAMES,
-					velocity,
-				}).unwrap();
-				// Damage enemy.
+				// Damage and knock back enemy.
+				sto_knocked_back.insert(enemy_id, KnockedBack::from_positions(thrust_attack_position, enemy_position)).unwrap();
 				sto_health.get_mut(enemy_id).unwrap().damage(1);
 				// Make the thrust attack inactive now that it has hit an enemy.
 				thrust_attack.make_inactive();
@@ -125,12 +105,12 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 			&sto_position,
 		).join() {
 			// Damage and knock back any enemies in collision with the slash attack.
-			let enemy_component_iter = (&entities, &sto_enemy, &sto_rectangle_collider, &sto_position).join();
-			for (enemy_id, _enemy, enemy_collider, enemy_position) in enemy_component_iter {
-				// Ignore collisions with knocked back enemies.
-				if sto_knocked_back.contains(enemy_id) {
-					continue;
-				}
+			for (enemy_id, _enemy, enemy_collider, enemy_position) in (
+				&entities,
+				&sto_enemy,
+				&sto_rectangle_collider,
+				&sto_position,
+			).join() {
 				// Ignore collisions with enemies that have already been hit.
 				if slash_attack.has_been_hit(enemy_id) {
 					continue;
@@ -140,28 +120,11 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 					(&slash_attack_collider, &slash_attack_position),
 				);
 				if intersecting {
+					// Knock back and damage enemy.
+					sto_knocked_back.insert(enemy_id, KnockedBack::from_positions(slash_attack_position, enemy_position)).unwrap();
+					sto_health.get_mut(enemy_id).unwrap().damage(1);
 					// Mark this enemy has having been hit by this attack.
 					slash_attack.mark_as_hit(enemy_id);
-					// Compute heading of velocity based on displacement from the slash attack to the enemy.
-					let mut velocity = Velocity {
-						x: enemy_position.x - slash_attack_position.x,
-						y: enemy_position.y - slash_attack_position.y,
-					};
-					// Normalize knockback to a set speed.
-					if velocity.x != 0.0 || velocity.y != 0.0 {
-						let magnitude = f32::sqrt(velocity.x.powi(2) + velocity.y.powi(2));
-						velocity.x *= KNOCKBACK_SPEED / magnitude;
-						velocity.y *= KNOCKBACK_SPEED / magnitude;
-					} else {
-						// The slash attack is directly on top of the enemy. Knock towards the right arbitrarily.
-						velocity.x = KNOCKBACK_SPEED;
-					}
-					sto_knocked_back.insert(enemy_id, KnockedBack {
-						frames_left: KNOCKBACK_FRAMES,
-						velocity,
-					}).unwrap();
-					// Damage enemy.
-					sto_health.get_mut(enemy_id).unwrap().damage(1);
 				}
 			}
 		}
@@ -175,8 +138,8 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 			&sto_position,
 			&mut sto_health,
 		).join() {
-			// Ignore enemy collisions if already knocked back.
-			if sto_knocked_back.contains(hero_id) {
+			// Ignore invulnerable heroes.
+			if sto_invulnerable.contains(hero_id) {
 				continue;
 			}
 			// Find the closest enemy in collision with the hero.
@@ -201,26 +164,11 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 			}
 			// If any enemies were close enough for a collision, knock the hero back from the closest one.
 			if let Some(enemy_position) = closest_colliding_position {
-				// Compute heading of velocity based on displacement from the enemy to the hero.
-				let mut velocity = Velocity {
-					x: hero_position.x - enemy_position.x,
-					y: hero_position.y - enemy_position.y,
-				};
-				// Normalize knockback to a set speed.
-				if velocity.x != 0.0 || velocity.y != 0.0 {
-					let magnitude = f32::sqrt(velocity.x.powi(2) + velocity.y.powi(2));
-					velocity.x *= KNOCKBACK_SPEED / magnitude;
-					velocity.y *= KNOCKBACK_SPEED / magnitude;
-				} else {
-					// The enemy is directly on top of the hero. Knock towards the right arbitrarily.
-					velocity.x = KNOCKBACK_SPEED;
-				}
-				sto_knocked_back.insert(hero_id, KnockedBack {
-					frames_left: KNOCKBACK_FRAMES,
-					velocity,
-				}).unwrap();
-				// Damage hero.
+				// Damage and knock back hero.
+				sto_knocked_back.insert(hero_id, KnockedBack::from_positions(enemy_position, hero_position)).unwrap();
 				hero_health.damage(1);
+				// Give hero invulnerability.
+				sto_invulnerable.insert(hero_id, Invulnerable::new()).unwrap();
 			}
 		}
 		// Handle hero-heart collisions.

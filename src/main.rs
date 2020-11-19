@@ -49,6 +49,7 @@ fn main() -> amethyst::Result<()> {
 		.with(HeroControl::new(), "hero_control", &["input_system"])
 		.with(EnemyControl, "enemy_control", &[])
 		.with(Knockback, "knockback", &[])
+		.with(Invulnerability, "invulnerability", &[])
 		.with_barrier()
 		.with(Motion, "motion", &[])
 		.with_barrier()

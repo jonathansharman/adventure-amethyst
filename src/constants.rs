@@ -19,6 +19,13 @@ pub const KNOCKBACK_SPEED: f32 = 12.5;
 /// The number of frames knockback lasts.
 pub const KNOCKBACK_FRAMES: u32 = 5;
 
+/// The number of frames a character is invulnerable after being damaged.
+pub const INVULNERABLE_FRAMES: u32 = 60;
+/// The period of the blinking animation during invulnerability, in frames.
+pub const INVULNERABLE_BLINK_PERIOD: u32 = 2;
+/// How bright a character should be during the dim part of the invulnerability blinking animation.
+pub const INVULNERABLE_BLINK_LUMINANCE: f32 = 0.75;
+
 /// The width of a heart pickup in the world.
 pub const HEART_WIDTH: f32 = 26.0;
 /// The height of a heart pickup in the world.

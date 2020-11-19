@@ -1,5 +1,6 @@
 use crate::component::{
 	KnockedBack,
+	KnockedBackFinished,
 	Velocity,
 };
 
@@ -8,7 +9,7 @@ use amethyst::{
 	ecs::{Entity, Entities, Join, System, SystemData, WriteStorage},
 };
 
-/// Controls the hero character based on player input.
+/// Moves characters that have been knocked back, stops them when the effect expires.
 #[derive(SystemDesc)]
 pub struct Knockback;
 
@@ -21,19 +22,17 @@ impl<'a> System<'a> for Knockback {
 
 	fn run(&mut self, (entities, mut sto_knocked_back, mut sto_velocity): Self::SystemData) {
 		let mut entities_finished_knockback: Vec<Entity> = Vec::new();
-		for (entity, knocked_back, velocity) in (
+		for (id, knocked_back, velocity) in (
 			&entities,
 			&mut sto_knocked_back,
 			&mut sto_velocity,
 		).join() {
-			*velocity = knocked_back.velocity;
-			knocked_back.frames_left -= 1;
-			if knocked_back.frames_left == 0 {
-				entities_finished_knockback.push(entity);
+			if let KnockedBackFinished::Yes = knocked_back.update(velocity) {
+				entities_finished_knockback.push(id);
 			}
 		}
-		for entity in entities_finished_knockback {
-			sto_knocked_back.remove(entity);
+		for id in entities_finished_knockback {
+			sto_knocked_back.remove(id);
 		}
 	}
 }
