@@ -18,7 +18,7 @@ use crate::{
 use amethyst::{
 	core::Transform,
 	derive::SystemDesc,
-	ecs::{Entity, Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 	utils::removal::Removal,
 };
 use rand::Rng;
@@ -34,7 +34,6 @@ impl<'a> System<'a> for EnemyControl {
 		Entities<'a>,
 		ReadExpect<'a, SpriteSheets>,
 		WriteStorage<'a, Removal<()>>,
-		WriteStorage<'a, Removal<Entity>>,
 		WriteStorage<'a, Wander>,
 		WriteStorage<'a, ShootArrows>,
 		ReadStorage<'a, KnockedBack>,
@@ -51,7 +50,6 @@ impl<'a> System<'a> for EnemyControl {
 		entities,
 		sprite_sheets,
 		mut sto_unit_removal,
-		mut sto_entity_removal,
 		mut sto_wander,
 		mut sto_shoot_arrows,
 		sto_knocked_back,
@@ -116,7 +114,6 @@ impl<'a> System<'a> for EnemyControl {
 				entities
 					.build_entity()
 					.with(Removal::new(()), &mut sto_unit_removal)
-					.with(Removal::new(source_id), &mut sto_entity_removal)
 					.with(ArrowAttack::new(Faction::Enemy), &mut sto_arrow_attack)
 					.with(position, &mut sto_position)
 					.with(velocity, &mut sto_velocity)
