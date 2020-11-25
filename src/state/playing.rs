@@ -1,11 +1,11 @@
 use crate::{
 	component::{
 		Animation,
-		behavior::Wander,
-		Character,
+		behavior::{ShootArrows, Wander},
 		collider::RectangleCollider,
 		Direction,
 		Enemy,
+		Faction,
 		Frame,
 		Health,
 		Heart,
@@ -32,7 +32,7 @@ use amethyst::{
 	core::transform::Transform,
 	ecs::{Entity, Join},
 	prelude::*,
-	renderer::{Camera as AmethystCamera, SpriteRender},
+	renderer::{Camera as AmethystCamera},
 	utils::removal::{exec_removal, Removal},
 	window::ScreenDimensions,
 	winit::{
@@ -75,26 +75,22 @@ impl SimpleState for Playing {
 		let hero = world
 			.create_entity()
 			.with(Hero { state: HeroState::FreelyMoving })
-			.with(Character)
+			.with(Faction::Ally)
 			.with(Health::new(HERO_BASE_HEALTH))
 			.with(hero_position)
 			.with(Velocity::default())
 			.with(Direction::Down)
 			.with(hero_collider)
-			.with(Animation::new(vec!(
+			.with(Animation::new(hero_sprite_sheet, vec!(
 				Frame {
 					up: 0,
 					down: 1,
 					left: 2,
 					right: 3,
 					duration: Duration::from_secs(1),
-				}
+				},
 			)))
 			.with(Transform::default())
-			.with(SpriteRender {
-				sprite_sheet: hero_sprite_sheet,
-				sprite_number: 0,
-			})
 			.build();
 
 		// Load starting region.
@@ -158,8 +154,8 @@ impl SimpleState for Playing {
 		}
 		// If so, take the exit.
 		if let Some((hero_id, exit)) = hero_id_exit {
-			// Remove all entities associated with the current region.
-			exec_removal(&*world.entities(), &world.read_storage::<Removal<i32>>(), 0);
+			// Remove all entities associated with the current region (which uses `Removal<()>`)).
+			exec_removal(&*world.entities(), &world.read_storage::<Removal<()>>(), ());
 			// Load the target region.
 			load_region(&exit.target_region, world);
 			// Place the player at the target entrance.
@@ -203,69 +199,63 @@ fn load_region(filename: &str, world: &mut World) {
 
 	// Generate enemies.
 	for enemy_data in region_data.enemies {
-		let sprite = SpriteRender {
-			sprite_sheet: world.read_resource::<SpriteSheets>().enemy.clone(),
-			sprite_number: 0,
-		};
 		let enemy_position: Position = enemy_data.location.into();
 		let enemy_collider = RectangleCollider {
 			half_width: 0.5 * TILE_SIZE,
 			half_height: 0.5 * TILE_SIZE,
 		};
+		let enemy_sprite_sheet = world.read_resource::<SpriteSheets>().enemy.clone();
 		world
 			.create_entity()
-			.with(Removal::new(0))
+			.with(Removal::new(()))
 			.with(Enemy)
-			.with(Character)
+			.with(Faction::Enemy)
 			.with(Health::new(ENEMY_BASE_HEALTH))
 			.with(Wander { direction: rand::thread_rng().gen() })
+			.with(ShootArrows::new())
 			.with(enemy_position)
 			.with(Velocity::default())
 			.with(Direction::Down)
 			.with(enemy_collider)
-			.with(Animation::new(vec!(
+			.with(Transform::default())
+			.with(Animation::new(enemy_sprite_sheet, vec!(
 				Frame {
 					up: 0,
 					down: 1,
 					left: 2,
 					right: 3,
 					duration: Duration::from_secs(1),
-				}
+				},
 			)))
 			.with(Transform::default())
-			.with(sprite)
 			.build();
 	}
 
 	// Generate hearts.
 	for heart_location in region_data.heart_locations {
-		let sprite = SpriteRender {
-			sprite_sheet: world.read_resource::<SpriteSheets>().hearts.clone(),
-			sprite_number: 1,
-		};
 		let heart_position: Position = heart_location.into();
 		let heart_collider = RectangleCollider {
 			half_width: 0.5 * HEART_WIDTH,
 			half_height: 0.5 * HEART_HEIGHT,
 		};
+		let heart_sprite_sheet = world.read_resource::<SpriteSheets>().hearts.clone();
 		world
 			.create_entity()
-			.with(Removal::new(0))
+			.with(Removal::new(()))
 			.with(Heart)
 			.with(heart_position)
 			.with(Direction::Down)
 			.with(heart_collider)
-			.with(Animation::new(vec!(
+			.with(Animation::new(heart_sprite_sheet, vec!(
 				Frame {
 					up: 1,
 					down: 1,
 					left: 1,
 					right: 1,
 					duration: Duration::from_secs(1),
-				}
+				},
 			)))
 			.with(Transform::default())
-			.with(sprite)
 			.build();
 	}
 }

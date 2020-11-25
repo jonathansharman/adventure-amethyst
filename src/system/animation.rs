@@ -9,7 +9,7 @@ use amethyst::{
 		Transform,
 	},
 	derive::SystemDesc,
-	ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, Read, ReadStorage, System, SystemData, WriteStorage},
 	renderer::SpriteRender,
 };
 use nalgebra::base::Vector3;
@@ -20,6 +20,7 @@ pub struct Animation;
 
 impl<'a> System<'a> for Animation {
 	type SystemData = (
+		Entities<'a>,
 		WriteStorage<'a, crate::component::Animation>,
 		ReadStorage<'a, Position>,
 		ReadStorage<'a, Direction>,
@@ -29,6 +30,7 @@ impl<'a> System<'a> for Animation {
 	);
 
 	fn run(&mut self, (
+		entities,
 		mut sto_animation,
 		sto_position,
 		sto_direction,
@@ -36,22 +38,21 @@ impl<'a> System<'a> for Animation {
 		mut sto_transform,
 		time,
 	): Self::SystemData) {
-		for (animation, position, direction, sprite, transform) in (
+		for (id, animation, position, direction) in (
+			&entities,
 			&mut sto_animation,
 			&sto_position,
 			&sto_direction,
-			&mut sto_sprite_render,
-			&mut sto_transform,
 		).join() {
 			// Update animation.
 			animation.advance(time.delta_time());
 			animation.set_direction(*direction);
-			// Update translation according to position.
+			// Set transform according to position.
+			let transform = sto_transform.get_mut(id).unwrap();
 			transform.set_translation_xyz(position.x, position.y, 0.5);
-			// Increase scale.
 			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
-			// Update sprite according to direction.
-			sprite.sprite_number = animation.current_sprite_number();
+			// Set the sprite render.
+			sto_sprite_render.insert(id, animation.current_sprite_render()).unwrap();
 		}
 	}
 }

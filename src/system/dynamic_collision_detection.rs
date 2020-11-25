@@ -1,5 +1,6 @@
 use crate::{
 	component::{
+		ArrowAttack,
 		collider::{
 			HalfDiskCollider,
 			RectangleCollider,
@@ -7,6 +8,7 @@ use crate::{
 			rect_rect_intersection_area,
 		},
 		Enemy,
+		Faction,
 		Health,
 		Heart,
 		Hero,
@@ -35,12 +37,14 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		WriteStorage<'a, Position>,
 		ReadStorage<'a, Hero>,
 		ReadStorage<'a, Enemy>,
+		ReadStorage<'a, Faction>,
 		WriteStorage<'a, SlashAttack>,
 		WriteStorage<'a, ThrustAttack>,
 		WriteStorage<'a, Health>,
 		WriteStorage<'a, Heart>,
 		WriteStorage<'a, KnockedBack>,
 		WriteStorage<'a, Invulnerable>,
+		ReadStorage<'a, ArrowAttack>,
 	);
 
 	fn run(&mut self, (
@@ -50,12 +54,14 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		sto_position,
 		sto_hero,
 		sto_enemy,
+		sto_faction,
 		mut sto_slash_attack,
 		mut sto_thrust_attack,
 		mut sto_health,
 		sto_heart,
 		mut sto_knocked_back,
 		mut sto_invulnerable,
+		sto_arrow_attack,
 	): Self::SystemData) {
 		// Handle thrust attacks against enemies.
 		let mut max_overlap_area = 0.0;
@@ -126,6 +132,43 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 					// Mark this enemy has having been hit by this attack.
 					slash_attack.mark_as_hit(enemy_id);
 				}
+			}
+		}
+		// Handle arrow collisions.
+		for (arrow_attack_id, arrow_attack, arrow_attack_collider, arrow_attack_position) in (
+			&entities,
+			&sto_arrow_attack,
+			&sto_rectangle_collider,
+			&sto_position,
+		).join() {
+			let mut max_overlap_area = 0.0;
+			let mut closest_colliding_target_id_and_position = None;
+			for (target_id, target_faction, target_collider, target_position) in (
+				&entities,
+				&sto_faction,
+				&sto_rectangle_collider,
+				&sto_position,
+			).join() {
+				// Ignore collisions with entities from the same faction.
+				if arrow_attack.faction() == *target_faction {
+					continue;
+				}
+				let overlap_area = rect_rect_intersection_area(
+					(&arrow_attack_collider, &arrow_attack_position),
+					(&target_collider, &target_position),
+				);
+				if overlap_area > max_overlap_area {
+					max_overlap_area = overlap_area;
+					closest_colliding_target_id_and_position = Some((target_id, target_position));
+				}
+			}
+			// If any targets were close enough for a collision, damage and knock back the closest one.
+			if let Some((target_id, target_position)) = closest_colliding_target_id_and_position {
+				// Damage and knock back target.
+				sto_knocked_back.insert(target_id, KnockedBack::from_positions(arrow_attack_position, &target_position)).unwrap();
+				sto_health.get_mut(target_id).unwrap().damage(1);
+				// Destroy the arrow attack.
+				entities.delete(arrow_attack_id).unwrap();
 			}
 		}
 		// Handle hero-enemy collisions.

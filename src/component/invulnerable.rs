@@ -9,6 +9,7 @@ use amethyst::{
 };
 
 /// Makes a character immune to damage for a number of frames.
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Invulnerable {
 	frames_left: u32,
 }

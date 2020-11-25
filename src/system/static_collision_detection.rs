@@ -1,8 +1,8 @@
 use crate::{
 	component::{
-		Character,
 		collider::RectangleCollider,
 		Direction,
+		Faction,
 		Position,
 		Terrain,
 	},
@@ -22,7 +22,7 @@ pub struct StaticCollisionDetection;
 impl<'a> System<'a> for StaticCollisionDetection {
 	type SystemData = (
 		ReadExpect<'a, CurrentRegion>,
-		ReadStorage<'a, Character>,
+		ReadStorage<'a, Faction>,
 		ReadStorage<'a, RectangleCollider>,
 		ReadStorage<'a, Terrain>,
 		WriteStorage<'a, Position>,
@@ -30,14 +30,14 @@ impl<'a> System<'a> for StaticCollisionDetection {
 
 	fn run(&mut self, (
 		current_region,
-		sto_character,
+		sto_faction,
 		sto_rectangle_collider,
 		sto_terrain,
 		mut sto_position,
 	): Self::SystemData) {
 		// Push characters out of obstacles.
-		for (_character, collider, position) in (
-			&sto_character,
+		for (_faction, collider, position) in (
+			&sto_faction,
 			&sto_rectangle_collider,
 			&mut sto_position,
 		).join() {

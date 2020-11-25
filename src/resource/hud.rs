@@ -3,6 +3,7 @@ use amethyst::{
 };
 
 /// Tracks and displays HUD data, like current health, selected items, etc.
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct Hud {
 	pub max_hearts: i32,
 	pub heart_images: Vec<Entity>,

@@ -4,6 +4,7 @@ use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
 use std::collections::HashSet;
 
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct SlashAttack {
 	source_id: Entity,
 	/// IDs of characters this attack has already damaged.

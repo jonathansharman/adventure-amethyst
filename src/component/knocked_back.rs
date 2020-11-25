@@ -6,6 +6,7 @@ use crate::{
 use amethyst::ecs::{Component, DenseVecStorage};
 use serde::Deserialize;
 
+/// Makes a character be knocked towards a direction for a short duration.
 #[derive(PartialEq, Copy, Clone, Debug, Deserialize)]
 pub struct KnockedBack {
 	velocity: Velocity,

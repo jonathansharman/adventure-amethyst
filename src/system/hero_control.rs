@@ -20,10 +20,9 @@ use crate::{
 use amethyst::{
 	core::Transform,
 	derive::SystemDesc,
-	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entity, Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 	input::InputHandler,
-	renderer::SpriteRender,
-	shred::{Read},
+	shred::Read,
 	utils::removal::Removal,
 };
 
@@ -49,7 +48,8 @@ impl<'a> System<'a> for HeroControl {
 		Read<'a, InputHandler<InputBindings>>,
 		Entities<'a>,
 		ReadExpect<'a, SpriteSheets>,
-		WriteStorage<'a, Removal<i32>>,
+		WriteStorage<'a, Removal<()>>,
+		WriteStorage<'a, Removal<Entity>>,
 		WriteStorage<'a, Hero>,
 		ReadStorage<'a, KnockedBack>,
 		WriteStorage<'a, Position>,
@@ -61,14 +61,14 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, HalfDiskCollider>,
 		WriteStorage<'a, Animation>,
 		WriteStorage<'a, Transform>,
-		WriteStorage<'a, SpriteRender>,
 	);
 
 	fn run(&mut self, (
 		input,
 		entities,
 		sprite_sheets,
-		mut sto_removal,
+		mut sto_unit_removal,
+		mut sto_entity_removal,
 		mut sto_hero,
 		sto_knock_back,
 		mut sto_position,
@@ -80,7 +80,6 @@ impl<'a> System<'a> for HeroControl {
 		mut sto_disk_arc_collider,
 		mut sto_animation,
 		mut sto_transform,
-		mut sto_sprite_render,
 	): Self::SystemData) {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
@@ -158,29 +157,25 @@ impl<'a> System<'a> for HeroControl {
 						};
 						if advancing {
 							// Hero is advancing -> thrust attack.
-							let thrust_attack_sprite = SpriteRender {
-								sprite_sheet: sprite_sheets.thrust_attack.clone(),
-								sprite_number: 0,
-							};
-							let thrust_attack_animation = Animation::new(vec!(
+							let thrust_attack_animation = Animation::new(sprite_sheets.thrust_attack.clone(), vec!(
 								Frame {
 									up: 0,
 									down: 1,
 									left: 2,
 									right: 3,
 									duration: Duration::from_secs(1),
-								}
+								},
 							));
 							let thrust_attack_id = entities
 								.build_entity()
-								.with(Removal::new(0), &mut sto_removal)
+								.with(Removal::new(()), &mut sto_unit_removal)
+								.with(Removal::new(hero_id), &mut sto_entity_removal)
 								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
 								.with(thrust_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)
-								.with(thrust_attack_sprite, &mut sto_sprite_render)
 								.build();
 							hero.state = HeroState::Thrusting {
 								thrust_attack_id: thrust_attack_id,
@@ -188,33 +183,29 @@ impl<'a> System<'a> for HeroControl {
 							};
 						} else {
 							// Hero is strafing/retreating/standing still -> slash attack.
-							let slash_attack_sprite = SpriteRender {
-								sprite_sheet: sprite_sheets.slash_attack.clone(),
-								sprite_number: 0,
-							};
 							let slash_attack_collider = HalfDiskCollider {
-								radius: SWORD_SLASH_RADIUS,
+								radius: SLASH_ATTACK_RADIUS,
 								direction: hero_direction,
 							};
-							let slash_attack_animation = Animation::new(vec!(
+							let slash_attack_animation = Animation::new(sprite_sheets.slash_attack.clone(), vec!(
 								Frame {
 									up: 0,
 									down: 1,
 									left: 2,
 									right: 3,
 									duration: Duration::from_secs(1),
-								}
+								},
 							));
 							let slash_attack_id = entities
 								.build_entity()
-								.with(Removal::new(0), &mut sto_removal)
+								.with(Removal::new(()), &mut sto_unit_removal)
+								.with(Removal::new(hero_id), &mut sto_entity_removal)
 								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
 								.with(slash_attack_animation, &mut sto_animation)
 								.with(Transform::default(), &mut sto_transform)
-								.with(slash_attack_sprite, &mut sto_sprite_render)
 								.build();
 							hero.state = HeroState::Slashing {
 								slash_attack_id,

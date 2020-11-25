@@ -1,6 +1,7 @@
 use amethyst::ecs::{Component, DenseVecStorage};
 
 /// Represents a character's health or hit points.
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Health {
 	current: i32,
 	max: i32,

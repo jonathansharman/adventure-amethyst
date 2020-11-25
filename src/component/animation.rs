@@ -1,6 +1,10 @@
 use crate::component::Direction;
 
-use amethyst::ecs::{Component, DenseVecStorage};
+use amethyst::{
+	assets::Handle,
+	ecs::{Component, DenseVecStorage},
+	renderer::{SpriteRender, SpriteSheet},
+};
 use serde::Deserialize;
 
 use std::time::Duration;
@@ -9,8 +13,9 @@ impl Component for Animation {
 	type Storage = DenseVecStorage<Self>;
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Animation {
+	sprite_sheet: Handle<SpriteSheet>,
 	frames: Vec<Frame>,
 	frame_number: usize,
 	frame_progress: Duration,
@@ -18,8 +23,9 @@ pub struct Animation {
 }
 
 impl Animation {
-	pub fn new(frames: Vec<Frame>) -> Animation {
+	pub fn new(sprite_sheet: Handle<SpriteSheet>, frames: Vec<Frame>) -> Animation {
 		Animation {
+			sprite_sheet,
 			frames,
 			frame_number: 0,
 			frame_progress: Duration::from_secs(0),
@@ -27,13 +33,17 @@ impl Animation {
 		}
 	}
 
-	pub fn current_sprite_number(&self) -> usize {
+	pub fn current_sprite_render(&self) -> SpriteRender {
 		let frame = self.frames[self.frame_number];
-		match self.direction {
+		let sprite_number = match self.direction {
 			Direction::Up => frame.up,
 			Direction::Down => frame.down,
 			Direction::Left => frame.left,
 			Direction::Right => frame.right,
+		};
+		SpriteRender {
+			sprite_sheet: self.sprite_sheet.clone(),
+			sprite_number,
 		}
 	}
 

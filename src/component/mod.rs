@@ -1,9 +1,10 @@
 mod animation;
+mod arrow_attack;
 pub mod behavior;
-mod character;
 pub mod collider;
 mod direction;
 mod enemy;
+mod faction;
 mod health;
 mod heart;
 mod hero;
@@ -16,9 +17,10 @@ mod terrain;
 mod velocity;
 
 pub use animation::{Animation, Frame};
-pub use character::Character;
+pub use arrow_attack::ArrowAttack;
 pub use direction::Direction;
 pub use enemy::Enemy;
+pub use faction::Faction;
 pub use health::Health;
 pub use heart::Heart;
 pub use hero::{Hero, HeroState};

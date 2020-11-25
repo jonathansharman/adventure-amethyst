@@ -22,6 +22,7 @@ use amethyst::{
 use nalgebra::Vector3;
 
 /// A set of tiles representing a game region, with links to other regions.
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct Region {
 	row_count: usize,
 	col_count: usize,
@@ -57,7 +58,7 @@ impl Region {
 			// Add the tile to the world and the region's tile list, and track its collisions.
 			let tile = world
 				.create_entity()
-				.with(Removal::new(0))
+				.with(Removal::new(()))
 				.with(terrain)
 				.with(tile_transform)
 				.with(sprite)
@@ -107,6 +108,7 @@ impl Region {
 }
 
 /// Resource for accessing the currently active region.
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct CurrentRegion {
 	region: Option<Region>,
 }

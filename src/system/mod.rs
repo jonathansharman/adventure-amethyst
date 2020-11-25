@@ -1,4 +1,5 @@
 mod animation;
+mod attack_updates;
 mod camera_control;
 mod death;
 mod dynamic_collision_detection;
@@ -9,9 +10,9 @@ mod invulnerability;
 mod knockback;
 mod motion;
 mod static_collision_detection;
-mod sword_attack_updates;
 
 pub use animation::Animation;
+pub use attack_updates::AttackUpdates;
 pub use camera_control::CameraControl;
 pub use death::Death;
 pub use dynamic_collision_detection::DynamicCollisionDetection;
@@ -22,4 +23,3 @@ pub use invulnerability::Invulnerability;
 pub use knockback::Knockback;
 pub use motion::Motion;
 pub use static_collision_detection::StaticCollisionDetection;
-pub use sword_attack_updates::SwordAttackUpdates;

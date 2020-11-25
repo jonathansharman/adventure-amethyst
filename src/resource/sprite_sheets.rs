@@ -10,6 +10,7 @@ use amethyst::{
 };
 
 /// Container for all the game's sprite sheets.
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct SpriteSheets {
 	pub enemy: Handle<SpriteSheet>,
 	pub hero: Handle<SpriteSheet>,
@@ -17,6 +18,7 @@ pub struct SpriteSheets {
 	pub thrust_attack: Handle<SpriteSheet>,
 	pub terrain: Handle<SpriteSheet>,
 	pub hearts: Handle<SpriteSheet>,
+	pub arrow_attack: Handle<SpriteSheet>,
 }
 
 impl SpriteSheets {
@@ -33,12 +35,13 @@ impl SpriteSheets {
 			)
 		};
 		Self {
-			enemy: load_sprite_sheet("arrow", textures.enemy.clone()),
-			hero: load_sprite_sheet("arrow", textures.hero.clone()),
+			enemy: load_sprite_sheet("character", textures.enemy.clone()),
+			hero: load_sprite_sheet("character", textures.hero.clone()),
 			slash_attack: load_sprite_sheet("slash_attack", textures.slash_attack.clone()),
 			thrust_attack: load_sprite_sheet("thrust_attack", textures.thrust_attack.clone()),
 			terrain: load_sprite_sheet("terrain", textures.terrain.clone()),
 			hearts: load_sprite_sheet("hearts", textures.hearts.clone()),
+			arrow_attack: load_sprite_sheet("arrow_attack", textures.arrow_attack.clone()),
 		}
 	}
 }

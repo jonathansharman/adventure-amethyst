@@ -59,7 +59,7 @@ fn main() -> amethyst::Result<()> {
 		.with_barrier()
 		.with(Death, "death", &[])
 		.with_barrier()
-		.with(SwordAttackUpdates, "sword_attack_updates", &[])
+		.with(AttackUpdates, "attack_updates", &[])
 		.with_barrier()
 		.with(Animation, "animation", &[])
 		.with(CameraControl, "camera_control", &[])

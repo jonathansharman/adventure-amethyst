@@ -8,6 +8,7 @@ use amethyst::{
 };
 
 /// Container for all the game's textures.
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub struct Textures {
 	pub enemy: Handle<Texture>,
 	pub hero: Handle<Texture>,
@@ -15,6 +16,7 @@ pub struct Textures {
 	pub thrust_attack: Handle<Texture>,
 	pub terrain: Handle<Texture>,
 	pub hearts: Handle<Texture>,
+	pub arrow_attack: Handle<Texture>,
 }
 
 impl Textures {
@@ -30,12 +32,13 @@ impl Textures {
 			)
 		};
 		Self {
-			enemy: load_texture("arrow"),
-			hero: load_texture("arrow"),
+			enemy: load_texture("character"),
+			hero: load_texture("character"),
 			slash_attack: load_texture("slash_attack"),
 			thrust_attack: load_texture("thrust_attack"),
 			terrain: load_texture("terrain"),
 			hearts: load_texture("hearts"),
+			arrow_attack: load_texture("arrow_attack"),
 		}
 	}
 }

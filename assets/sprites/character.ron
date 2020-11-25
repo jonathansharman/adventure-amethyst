@@ -1,0 +1,6 @@
+Grid((
+	texture_width: 80,
+	texture_height: 20,
+	columns: 4,
+	sprite_count: Some(4),
+))

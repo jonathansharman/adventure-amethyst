@@ -5,6 +5,7 @@ use crate::{
 
 use amethyst::ecs::{Component, DenseVecStorage, Entity};
 
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct ThrustAttack {
 	source_id: Entity,
 	is_active: bool,
@@ -47,18 +48,18 @@ impl ThrustAttack {
 		match source_direction {
 			Direction::Up => Position {
 				x: source_position.x,
-				y: source_position.y + source_collider.half_height + SWORD_THRUST_HALF_LENGTH,
+				y: source_position.y + source_collider.half_height + THRUST_ATTACK_HALF_LENGTH,
 			},
 			Direction::Down => Position {
 				x: source_position.x,
-				y: source_position.y - source_collider.half_height - SWORD_THRUST_HALF_LENGTH,
+				y: source_position.y - source_collider.half_height - THRUST_ATTACK_HALF_LENGTH,
 			},
 			Direction::Left => Position {
-				x: source_position.x - source_collider.half_width - SWORD_THRUST_HALF_LENGTH,
+				x: source_position.x - source_collider.half_width - THRUST_ATTACK_HALF_LENGTH,
 				y: source_position.y,
 			},
 			Direction::Right => Position {
-				x: source_position.x + source_collider.half_width + SWORD_THRUST_HALF_LENGTH,
+				x: source_position.x + source_collider.half_width + THRUST_ATTACK_HALF_LENGTH,
 				y: source_position.y,
 			},
 		}
@@ -68,12 +69,12 @@ impl ThrustAttack {
 	pub fn compute_collider(source_direction: &Direction) -> RectangleCollider {
 		match source_direction {
 			Direction::Up | Direction::Down => RectangleCollider {
-				half_width: SWORD_THRUST_HALF_WIDTH,
-				half_height: SWORD_THRUST_HALF_LENGTH,
+				half_width: THRUST_ATTACK_HALF_WIDTH,
+				half_height: THRUST_ATTACK_HALF_LENGTH,
 			},
 			Direction::Left | Direction::Right => RectangleCollider {
-				half_width: SWORD_THRUST_HALF_LENGTH,
-				half_height: SWORD_THRUST_HALF_WIDTH,
+				half_width: THRUST_ATTACK_HALF_LENGTH,
+				half_height: THRUST_ATTACK_HALF_WIDTH,
 			},
 		}
 	}
