@@ -9,6 +9,7 @@ use crate::{
 		Frame,
 		KnockedBack,
 		Position,
+		removal::TiedToRegion,
 		Velocity,
 	},
 	constants::*,
@@ -32,7 +33,7 @@ impl<'a> System<'a> for EnemyControl {
 	type SystemData = (
 		Entities<'a>,
 		ReadExpect<'a, SpriteSheets>,
-		WriteStorage<'a, Removal<()>>,
+		WriteStorage<'a, Removal<TiedToRegion>>,
 		WriteStorage<'a, Wander>,
 		WriteStorage<'a, ShootArrows>,
 		ReadStorage<'a, KnockedBack>,
@@ -47,7 +48,7 @@ impl<'a> System<'a> for EnemyControl {
 	fn run(&mut self, (
 		entities,
 		sprite_sheets,
-		mut sto_unit_removal,
+		mut sto_removal_tied_to_region,
 		mut sto_wander,
 		mut sto_shoot_arrows,
 		sto_knocked_back,
@@ -110,8 +111,8 @@ impl<'a> System<'a> for EnemyControl {
 				let collider = ArrowAttack::compute_collider(&direction);
 				entities
 					.build_entity()
-					.with(Removal::new(()), &mut sto_unit_removal)
 					.with(ArrowAttack::new(Faction::Enemy), &mut sto_arrow_attack)
+					.with(Removal::new(TiedToRegion), &mut sto_removal_tied_to_region)
 					.with(position, &mut sto_position)
 					.with(velocity, &mut sto_velocity)
 					.with(direction, &mut sto_direction)

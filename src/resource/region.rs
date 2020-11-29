@@ -1,6 +1,7 @@
 use crate::{
 	component::{
 		Position,
+		removal::TiedToRegion,
 		Terrain,
 		TileCoords,
 	},
@@ -58,8 +59,8 @@ impl Region {
 			// Add the tile to the world and the region's tile list, and track its collisions.
 			let tile = world
 				.create_entity()
-				.with(Removal::new(()))
 				.with(terrain)
+				.with(Removal::new(TiedToRegion))
 				.with(tile_transform)
 				.with(sprite)
 				.build();

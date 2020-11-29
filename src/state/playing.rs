@@ -12,6 +12,7 @@ use crate::{
 		Hero,
 		HeroState,
 		Position,
+		removal::{TiedToEntity, TiedToRegion},
 		Shield,
 		Terrain,
 		TileCoords,
@@ -139,8 +140,8 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 		let shield_sprite_sheet = world.read_resource::<SpriteSheets>().shield.clone();
 		world
 			.create_entity()
-			.with(Removal::new(hero_id))
 			.with(Shield::new(hero_id))
+			.with(Removal::new(TiedToEntity(hero_id)))
 			.with(shield_position)
 			.with(hero_direction)
 			.with(shield_collider)
@@ -220,8 +221,8 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 		}
 		// If so, take the exit.
 		if let Some((hero_id, exit)) = hero_id_exit {
-			// Remove all entities associated with the current region (which uses `Removal<()>`)).
-			exec_removal(&*world.entities(), &world.read_storage::<Removal<()>>(), ());
+			// Remove all entities associated with the current region.
+			exec_removal(&*world.entities(), &world.read_storage::<Removal<TiedToRegion>>(), TiedToRegion);
 			// Load the target region.
 			load_region(&exit.target_region, world);
 			// Place the hero at the target entrance.
@@ -273,8 +274,8 @@ fn load_region(filename: &str, world: &mut World) {
 		let enemy_sprite_sheet = world.read_resource::<SpriteSheets>().enemy.clone();
 		world
 			.create_entity()
-			.with(Removal::new(()))
 			.with(Enemy)
+			.with(Removal::new(TiedToRegion))
 			.with(Faction::Enemy)
 			.with(Health::new(ENEMY_BASE_HEALTH))
 			.with(Wander { direction: rand::thread_rng().gen() })
@@ -305,8 +306,8 @@ fn load_region(filename: &str, world: &mut World) {
 		let heart_sprite_sheet = world.read_resource::<SpriteSheets>().hearts.clone();
 		world
 			.create_entity()
-			.with(Removal::new(()))
 			.with(Heart)
+			.with(Removal::new(TiedToRegion))
 			.with(heart_position)
 			.with(Direction::Down)
 			.with(heart_collider)

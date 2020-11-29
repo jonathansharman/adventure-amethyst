@@ -8,6 +8,7 @@ use crate::{
 		HeroState,
 		KnockedBack,
 		Position,
+		removal::{TiedToEntity, TiedToRegion},
 		SlashAttack,
 		ThrustAttack,
 		Velocity,
@@ -19,7 +20,7 @@ use crate::{
 
 use amethyst::{
 	derive::SystemDesc,
-	ecs::{Entity, Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 	input::InputHandler,
 	shred::Read,
 	utils::removal::Removal,
@@ -47,8 +48,8 @@ impl<'a> System<'a> for HeroControl {
 		Read<'a, InputHandler<InputBindings>>,
 		Entities<'a>,
 		ReadExpect<'a, SpriteSheets>,
-		WriteStorage<'a, Removal<()>>,
-		WriteStorage<'a, Removal<Entity>>,
+		WriteStorage<'a, Removal<TiedToRegion>>,
+		WriteStorage<'a, Removal<TiedToEntity>>,
 		WriteStorage<'a, Hero>,
 		ReadStorage<'a, KnockedBack>,
 		WriteStorage<'a, Position>,
@@ -65,8 +66,8 @@ impl<'a> System<'a> for HeroControl {
 		input,
 		entities,
 		sprite_sheets,
-		mut sto_unit_removal,
-		mut sto_entity_removal,
+		mut sto_removal_tied_to_region,
+		mut sto_removal_tied_to_entity,
 		mut sto_hero,
 		sto_knock_back,
 		mut sto_position,
@@ -165,9 +166,9 @@ impl<'a> System<'a> for HeroControl {
 							));
 							let thrust_attack_id = entities
 								.build_entity()
-								.with(Removal::new(()), &mut sto_unit_removal)
-								.with(Removal::new(hero_id), &mut sto_entity_removal)
 								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
+								.with(Removal::new(TiedToRegion), &mut sto_removal_tied_to_region)
+								.with(Removal::new(TiedToEntity(hero_id)), &mut sto_removal_tied_to_entity)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
@@ -194,9 +195,9 @@ impl<'a> System<'a> for HeroControl {
 							));
 							let slash_attack_id = entities
 								.build_entity()
-								.with(Removal::new(()), &mut sto_unit_removal)
-								.with(Removal::new(hero_id), &mut sto_entity_removal)
 								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
+								.with(Removal::new(TiedToRegion), &mut sto_removal_tied_to_region)
+								.with(Removal::new(TiedToEntity(hero_id)), &mut sto_removal_tied_to_entity)
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
