@@ -7,6 +7,7 @@ use crate::{
 			rect_intersects_half_disk,
 			rect_rect_intersection_area,
 		},
+		Direction,
 		Enemy,
 		Faction,
 		Health,
@@ -17,6 +18,7 @@ use crate::{
 		Position,
 		SlashAttack,
 		ThrustAttack,
+		Shield,
 	},
 };
 
@@ -35,11 +37,13 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		ReadStorage<'a, RectangleCollider>,
 		ReadStorage<'a, HalfDiskCollider>,
 		WriteStorage<'a, Position>,
+		ReadStorage<'a, Direction>,
 		ReadStorage<'a, Hero>,
 		ReadStorage<'a, Enemy>,
 		ReadStorage<'a, Faction>,
 		WriteStorage<'a, SlashAttack>,
 		WriteStorage<'a, ThrustAttack>,
+		WriteStorage<'a, Shield>,
 		WriteStorage<'a, Health>,
 		WriteStorage<'a, Heart>,
 		WriteStorage<'a, KnockedBack>,
@@ -52,11 +56,13 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 		sto_rectangle_collider,
 		sto_half_disk_collider,
 		sto_position,
+		sto_direction,
 		sto_hero,
 		sto_enemy,
 		sto_faction,
 		mut sto_slash_attack,
 		mut sto_thrust_attack,
+		sto_shield,
 		mut sto_health,
 		sto_heart,
 		mut sto_knocked_back,
@@ -135,12 +141,43 @@ impl<'a> System<'a> for DynamicCollisionDetection {
 			}
 		}
 		// Handle arrow collisions.
-		for (arrow_attack_id, arrow_attack, arrow_attack_collider, arrow_attack_position) in (
+		for (arrow_attack_id, arrow_attack, arrow_attack_collider, arrow_attack_position, arrow_attack_direction) in (
 			&entities,
 			&sto_arrow_attack,
 			&sto_rectangle_collider,
 			&sto_position,
+			&sto_direction,
 		).join() {
+			// If the arrow hits a shield from another faction, destroy the arrow.
+			let mut arrow_attack_blocked = false;
+			for (shield, shield_collider, shield_position, shield_direction) in (
+				&sto_shield,
+				&sto_rectangle_collider,
+				&sto_position,
+				&sto_direction,
+			).join() {
+				// Ignore collisions with shields from the same faction.
+				let bearer_faction = sto_faction.get(shield.bearer_id()).unwrap();
+				if arrow_attack.faction() == *bearer_faction {
+					continue;
+				}
+				// Ignore unopposing collisions.
+				if *arrow_attack_direction != shield_direction.opposite() {
+					continue;
+				}
+				let overlap_area = rect_rect_intersection_area(
+					(&arrow_attack_collider, &arrow_attack_position),
+					(&shield_collider, &shield_position),
+				);
+				if overlap_area > 0.0 {
+					arrow_attack_blocked = true;
+					entities.delete(arrow_attack_id).unwrap();
+				}
+			}
+			if arrow_attack_blocked {
+				continue;
+			}
+			// Otherwise, check for collisions with characters from other factions.
 			let mut max_overlap_area = 0.0;
 			let mut closest_colliding_target_id_and_position = None;
 			for (target_id, target_faction, target_collider, target_position) in (
