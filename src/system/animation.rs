@@ -38,19 +38,20 @@ impl<'a> System<'a> for Animation {
 		mut sto_transform,
 		time,
 	): Self::SystemData) {
-		for (id, animation, position, direction, transform) in (
+		for (id, animation, position, direction) in (
 			&entities,
 			&mut sto_animation,
 			&sto_position,
 			&sto_direction,
-			&mut sto_transform,
 		).join() {
 			// Update animation.
 			animation.advance(time.delta_time());
 			animation.set_direction(*direction);
 			// Set transform according to position.
+			let mut transform = Transform::default();
 			transform.set_translation_xyz(position.x, position.y, 0.5);
 			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
+			sto_transform.insert(id, transform).unwrap();
 			// Set the sprite render.
 			sto_sprite_render.insert(id, animation.current_sprite_render()).unwrap();
 		}

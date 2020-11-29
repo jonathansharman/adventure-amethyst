@@ -16,7 +16,6 @@ use crate::{
 };
 
 use amethyst::{
-	core::Transform,
 	derive::SystemDesc,
 	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 	utils::removal::Removal,
@@ -43,7 +42,6 @@ impl<'a> System<'a> for EnemyControl {
 		WriteStorage<'a, RectangleCollider>,
 		WriteStorage<'a, ArrowAttack>,
 		WriteStorage<'a, Animation>,
-		WriteStorage<'a, Transform>,
 	);
 
 	fn run(&mut self, (
@@ -59,7 +57,6 @@ impl<'a> System<'a> for EnemyControl {
 		mut sto_rectangle_collider,
 		mut sto_arrow_attack,
 		mut sto_animation,
-		mut sto_transform,
 	): Self::SystemData) {
 		const SPEED: f32 = 3.0;
 		const TURN_THRESHOLD: f32 = 0.01;
@@ -128,7 +125,6 @@ impl<'a> System<'a> for EnemyControl {
 							duration: Duration::from_secs(1),
 						},
 					)), &mut sto_animation)
-					.with(Transform::default(), &mut sto_transform)
 					.build();
 			}
 		}

@@ -18,7 +18,6 @@ use crate::{
 };
 
 use amethyst::{
-	core::Transform,
 	derive::SystemDesc,
 	ecs::{Entity, Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 	input::InputHandler,
@@ -60,7 +59,6 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, RectangleCollider>,
 		WriteStorage<'a, HalfDiskCollider>,
 		WriteStorage<'a, Animation>,
-		WriteStorage<'a, Transform>,
 	);
 
 	fn run(&mut self, (
@@ -79,7 +77,6 @@ impl<'a> System<'a> for HeroControl {
 		mut sto_rectangle_collider,
 		mut sto_disk_arc_collider,
 		mut sto_animation,
-		mut sto_transform,
 	): Self::SystemData) {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
@@ -175,7 +172,6 @@ impl<'a> System<'a> for HeroControl {
 								.with(hero_direction, &mut sto_direction)
 								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
 								.with(thrust_attack_animation, &mut sto_animation)
-								.with(Transform::default(), &mut sto_transform)
 								.build();
 							hero.state = HeroState::Thrusting {
 								thrust_attack_id: thrust_attack_id,
@@ -205,7 +201,6 @@ impl<'a> System<'a> for HeroControl {
 								.with(hero_direction, &mut sto_direction)
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
 								.with(slash_attack_animation, &mut sto_animation)
-								.with(Transform::default(), &mut sto_transform)
 								.build();
 							hero.state = HeroState::Slashing {
 								slash_attack_id,

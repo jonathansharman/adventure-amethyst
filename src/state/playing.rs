@@ -134,7 +134,6 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 					duration: Duration::from_secs(1),
 				},
 			)))
-			.with(Transform::default())
 			.build();
 		// Create hero's shield.
 		let shield_sprite_sheet = world.read_resource::<SpriteSheets>().shield.clone();
@@ -154,7 +153,6 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 					duration: Duration::from_secs(1),
 				},
 			)))
-			.with(Transform::default())
 			.build();
 
 		// Load starting region.
@@ -285,7 +283,6 @@ fn load_region(filename: &str, world: &mut World) {
 			.with(Velocity::default())
 			.with(Direction::Down)
 			.with(enemy_collider)
-			.with(Transform::default())
 			.with(Animation::new(enemy_sprite_sheet, vec!(
 				Frame {
 					up: 0,
@@ -295,7 +292,6 @@ fn load_region(filename: &str, world: &mut World) {
 					duration: Duration::from_secs(1),
 				},
 			)))
-			.with(Transform::default())
 			.build();
 	}
 
@@ -323,7 +319,6 @@ fn load_region(filename: &str, world: &mut World) {
 					duration: Duration::from_secs(1),
 				},
 			)))
-			.with(Transform::default())
 			.build();
 	}
 }
