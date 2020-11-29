@@ -38,17 +38,17 @@ impl<'a> System<'a> for Animation {
 		mut sto_transform,
 		time,
 	): Self::SystemData) {
-		for (id, animation, position, direction) in (
+		for (id, animation, position, direction, transform) in (
 			&entities,
 			&mut sto_animation,
 			&sto_position,
 			&sto_direction,
+			&mut sto_transform,
 		).join() {
 			// Update animation.
 			animation.advance(time.delta_time());
 			animation.set_direction(*direction);
 			// Set transform according to position.
-			let transform = sto_transform.get_mut(id).unwrap();
 			transform.set_translation_xyz(position.x, position.y, 0.5);
 			transform.set_scale(Vector3::new(2.0, 2.0, 1.0));
 			// Set the sprite render.

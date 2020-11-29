@@ -18,8 +18,6 @@ mod resource;
 mod state;
 mod system;
 
-use system::*;
-
 fn main() -> amethyst::Result<()> {
 	amethyst::start_logger(Default::default());
 
@@ -45,28 +43,9 @@ fn main() -> amethyst::Result<()> {
 			.with_plugin(RenderUi::default())
 			.with_plugin(RenderFlat2D::default()),
 		)?
-		// Systems
-		.with(HeroControl::new(), "hero_control", &["input_system"])
-		.with(EnemyControl, "enemy_control", &[])
-		.with(Knockback, "knockback", &[])
-		.with(Invulnerability, "invulnerability", &[])
-		.with_barrier()
-		.with(Motion, "motion", &[])
-		.with_barrier()
-		.with(StaticCollisionDetection, "static_collision_detection", &[])
-		.with_barrier()
-		.with(DynamicCollisionDetection, "dynamic_collision_detection", &[])
-		.with_barrier()
-		.with(Death, "death", &[])
-		.with_barrier()
-		.with(AttackUpdates, "attack_updates", &[])
-		.with_barrier()
-		.with(Animation, "animation", &[])
-		.with(CameraControl, "camera_control", &[])
-		.with(HudUpdates, "hud_updates", &[])
 	};
 
-	Application::new(resources, state::Playing, game_data)?.run();
+	Application::new(resources, state::Playing::new(), game_data)?.run();
 
 	Ok(())
 }

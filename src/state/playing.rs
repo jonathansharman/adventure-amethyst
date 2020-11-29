@@ -27,11 +27,12 @@ use crate::{
 		SpriteSheets,
 		Textures,
 	},
+	system::*,
 };
 
 use amethyst::{
-	core::transform::Transform,
-	ecs::{Entity, Join},
+	core::{ArcThreadPool, transform::Transform},
+	ecs::{Dispatcher, DispatcherBuilder, Entity, Join},
 	prelude::*,
 	renderer::{Camera as AmethystCamera},
 	utils::removal::{exec_removal, Removal},
@@ -49,12 +50,45 @@ use std::fs::File;
 use std::time::Duration;
 
 /// The main gameplay state.
-pub struct Playing;
+pub struct Playing<'a, 'b> {
+	dispatcher: Option<Dispatcher<'a, 'b>>,
+}
 
-impl SimpleState for Playing {
+impl<'a, 'b> Playing<'a, 'b> {
+	pub fn new() -> Self {
+		Self { dispatcher: None }
+	}
+}
+
+impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 	fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
 		let world = data.world;
-		
+
+		// Set up dispatcher for this state.
+		let mut dispatcher = DispatcherBuilder::new()
+			.with_pool((*world.read_resource::<ArcThreadPool>()).clone())
+			.with(HeroControl::new(), "hero_control", &[])
+			.with(EnemyControl, "enemy_control", &[])
+			.with(Knockback, "knockback", &[])
+			.with(Invulnerability, "invulnerability", &[])
+			.with_barrier()
+			.with(Motion, "motion", &[])
+			.with_barrier()
+			.with(StaticCollisionDetection, "static_collision_detection", &[])
+			.with_barrier()
+			.with(DynamicCollisionDetection, "dynamic_collision_detection", &[])
+			.with_barrier()
+			.with(Death, "death", &[])
+			.with_barrier()
+			.with(AttackUpdates, "attack_updates", &[])
+			.with_barrier()
+			.with(Animation, "animation", &[])
+			.with(CameraControl, "camera_control", &[])
+			.with(HudUpdates, "hud_updates", &[])
+			.build();
+		dispatcher.setup(world);
+		self.dispatcher = Some(dispatcher);
+
 		// Register required components.
 		world.register::<Terrain>();
 		world.register::<Velocity>();
@@ -106,6 +140,7 @@ impl SimpleState for Playing {
 		let shield_sprite_sheet = world.read_resource::<SpriteSheets>().shield.clone();
 		world
 			.create_entity()
+			.with(Removal::new(hero_id))
 			.with(Shield::new(hero_id))
 			.with(shield_position)
 			.with(hero_direction)
@@ -160,8 +195,12 @@ impl SimpleState for Playing {
 
 	fn fixed_update(&mut self, data: StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
 		let world = data.world;
-		let exits = world.read_resource::<CurrentRegion>().get().exits().clone();
+		// Run dispatcher.
+		if let Some(dispatcher) = self.dispatcher.as_mut() {
+			dispatcher.dispatch(world);
+		}
 		// See if a hero is on an exit.
+		let exits = world.read_resource::<CurrentRegion>().get().exits().clone();
 		let mut hero_id_exit = None;
 		for (hero_id, _hero, hero_position) in (
 			&*world.entities(),
