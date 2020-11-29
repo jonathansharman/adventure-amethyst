@@ -12,6 +12,7 @@ use crate::{
 		Hero,
 		HeroState,
 		Position,
+		Shield,
 		Terrain,
 		TileCoords,
 		Velocity,
@@ -65,23 +66,51 @@ impl SimpleState for Playing {
 		// Create a current region manager.
 		world.insert(CurrentRegion::new());
 
-		// Create hero (player character).
+		// Create hero (player character) and give it a shield.
 		let hero_position = Position { x: TILE_SIZE * 30.0, y: -TILE_SIZE * 30.0 };
+		let hero_direction = Direction::Down;
 		let hero_collider = RectangleCollider {
 			half_width: 0.5 * TILE_SIZE,
 			half_height: 0.5 * TILE_SIZE,
 		};
 		let hero_sprite_sheet = world.read_resource::<SpriteSheets>().hero.clone();
-		let hero = world
+		// Create hero's shield components.
+		let shield_position = Shield::compute_position(
+			&hero_position,
+			&hero_direction,
+			&hero_collider,
+		);
+		let shield_collider = Shield::compute_collider(&hero_direction);
+		// Create hero.
+		let hero_id = world
 			.create_entity()
 			.with(Hero { state: HeroState::FreelyMoving })
 			.with(Faction::Ally)
 			.with(Health::new(HERO_BASE_HEALTH))
 			.with(hero_position)
 			.with(Velocity::default())
-			.with(Direction::Down)
+			.with(hero_direction)
 			.with(hero_collider)
 			.with(Animation::new(hero_sprite_sheet, vec!(
+				Frame {
+					up: 0,
+					down: 1,
+					left: 2,
+					right: 3,
+					duration: Duration::from_secs(1),
+				},
+			)))
+			.with(Transform::default())
+			.build();
+		// Create hero's shield.
+		let shield_sprite_sheet = world.read_resource::<SpriteSheets>().shield.clone();
+		world
+			.create_entity()
+			.with(Shield::new(hero_id))
+			.with(shield_position)
+			.with(hero_direction)
+			.with(shield_collider)
+			.with(Animation::new(shield_sprite_sheet, vec!(
 				Frame {
 					up: 0,
 					down: 1,
@@ -97,7 +126,7 @@ impl SimpleState for Playing {
 		load_region("test.ron", world);
 
 		// Move hero to the region's second entrance.
-		place_at_entrance(hero, 1, world);
+		place_at_entrance(hero_id, 1, world);
 
 		// Create and insert HUD.
 		world.insert(Hud::new());
@@ -158,7 +187,7 @@ impl SimpleState for Playing {
 			exec_removal(&*world.entities(), &world.read_storage::<Removal<()>>(), ());
 			// Load the target region.
 			load_region(&exit.target_region, world);
-			// Place the player at the target entrance.
+			// Place the hero at the target entrance.
 			place_at_entrance(hero_id, exit.target_entrance_idx, world);
 			// Reset the hero's state.
 			world.write_storage::<Hero>().get_mut(hero_id).unwrap().state = HeroState::FreelyMoving;

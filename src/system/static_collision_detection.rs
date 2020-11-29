@@ -70,7 +70,6 @@ impl<'a> System<'a> for StaticCollisionDetection {
 			let bottom_right = is_wall(high.x, low.y);
 			let top_left = is_wall(low.x, high.y);
 			let top_right = is_wall(high.x, high.y);
-			//log::info!("{} {} {} {}", bottom_left, bottom_right, top_left, top_right);
 
 			// Easy cases: hitting at least two walls at once.
 			let mut multi_hit = false;

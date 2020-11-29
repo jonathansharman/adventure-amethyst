@@ -13,6 +13,10 @@ pub const THRUST_ATTACK_HALF_WIDTH: f32 = 6.0;
 pub const THRUST_ATTACK_HALF_LENGTH: f32 = 20.0;
 /// The radius of a sword slash attack.
 pub const SLASH_ATTACK_RADIUS: f32 = 40.0;
+/// The shortest half-extent of a shield's collider.
+pub const SHIELD_HALF_WIDTH: f32 = 6.0;
+/// The longest half-extent of a shield's collider.
+pub const SHIELD_HALF_LENGTH: f32 = 20.0;
 /// The shortest half-extent of an arrow attack's collider.
 pub const ARROW_ATTACK_HALF_WIDTH: f32 = 6.0;
 /// The longest half-extent of an arrow attack's collider.

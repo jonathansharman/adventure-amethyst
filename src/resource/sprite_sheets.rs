@@ -19,6 +19,7 @@ pub struct SpriteSheets {
 	pub terrain: Handle<SpriteSheet>,
 	pub hearts: Handle<SpriteSheet>,
 	pub arrow_attack: Handle<SpriteSheet>,
+	pub shield: Handle<SpriteSheet>,
 }
 
 impl SpriteSheets {
@@ -42,6 +43,7 @@ impl SpriteSheets {
 			terrain: load_sprite_sheet("terrain", textures.terrain.clone()),
 			hearts: load_sprite_sheet("hearts", textures.hearts.clone()),
 			arrow_attack: load_sprite_sheet("arrow_attack", textures.arrow_attack.clone()),
+			shield: load_sprite_sheet("shield", textures.shield.clone()),
 		}
 	}
 }

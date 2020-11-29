@@ -3,13 +3,13 @@ use crate::{
 		collider::{HalfDiskCollider, RectangleCollider},
 		Direction,
 		Position,
+		Shield,
 		SlashAttack,
 		ThrustAttack,
 	},
 };
 
 use amethyst::{
-	core::Transform,
 	derive::SystemDesc,
 	ecs::{Entities, Join, System, SystemData, WriteStorage},
 };
@@ -23,29 +23,27 @@ impl<'a> System<'a> for AttackUpdates {
 		Entities<'a>,
 		WriteStorage<'a, SlashAttack>,
 		WriteStorage<'a, ThrustAttack>,
+		WriteStorage<'a, Shield>,
 		WriteStorage<'a, Position>,
 		WriteStorage<'a, Direction>,
 		WriteStorage<'a, HalfDiskCollider>,
 		WriteStorage<'a, RectangleCollider>,
-		WriteStorage<'a, Transform>,
 	);
 
 	fn run(&mut self, (
 		entities,
 		sto_slash_attack,
 		sto_thrust_attack,
+		sto_shield,
 		mut sto_position,
 		mut sto_direction,
 		mut sto_disk_arc_collider,
 		mut sto_rectangle_collider,
-		mut sto_transform,
 	): Self::SystemData) {
 		// Slash attack updates.
-		// Note: we can't borrow all components via join because we also need to borrow source components.
-		for (slash_attack_id, slash_attack, slash_attack_transform) in (
+		for (slash_attack_id, slash_attack) in (
 			&entities,
 			&sto_slash_attack,
-			&mut sto_transform,
 		).join() {
 			let source_id = slash_attack.source_id();
 			// Get source data.
@@ -57,20 +55,15 @@ impl<'a> System<'a> for AttackUpdates {
 			let slash_attack_direction = sto_direction.get_mut(slash_attack_id).unwrap();
 			let mut slash_attack_collider = sto_disk_arc_collider.get_mut(slash_attack_id).unwrap();
 
-			// Update slash position and slash/collider direction.
+			// Update slash direction, position, and collider.
 			*slash_attack_direction = source_direction;
-			slash_attack_collider.direction = source_direction;
 			*slash_attack_position = SlashAttack::compute_position(&source_position, &source_direction, source_collider);
-			// Update slash translation.
-			slash_attack_transform.set_translation_x(slash_attack_position.x);
-			slash_attack_transform.set_translation_y(slash_attack_position.y);
+			slash_attack_collider.direction = source_direction;
 		}
 		// Thrust attack updates.
-		// Note: we can't borrow all components via join because we also need to borrow source components.
-		for (thrust_attack_id, thrust_attack, thrust_attack_transform) in (
+		for (thrust_attack_id, thrust_attack) in (
 			&entities,
 			&sto_thrust_attack,
-			&mut sto_transform,
 		).join() {
 			let source_id = thrust_attack.source_id();
 			// Get source data.
@@ -82,14 +75,30 @@ impl<'a> System<'a> for AttackUpdates {
 			let thrust_attack_direction = sto_direction.get_mut(thrust_attack_id).unwrap();
 			let thrust_attack_collider = sto_rectangle_collider.get_mut(thrust_attack_id).unwrap();
 
-			// Update thrust direction.
+			// Update thrust direction, position, and collider.
 			*thrust_attack_direction = source_direction;
-			// Update thrust position and collider.
 			*thrust_attack_position = ThrustAttack::compute_position(&source_position, &source_direction, &source_collider);
 			*thrust_attack_collider = ThrustAttack::compute_collider(&source_direction);
-			// Update thrust translation.
-			thrust_attack_transform.set_translation_x(thrust_attack_position.x);
-			thrust_attack_transform.set_translation_y(thrust_attack_position.y);
+		}
+		// Shield updates.
+		for (shield_id, shield) in (
+			&entities,
+			&sto_shield,
+		).join() {
+			let bearer_id = shield.bearer_id();
+			// Get bearer data.
+			let bearer_position = *sto_position.get(bearer_id).unwrap();
+			let bearer_direction = *sto_direction.get(bearer_id).unwrap();
+			let bearer_collider = *sto_rectangle_collider.get(bearer_id).unwrap();
+			// Get shield data.
+			let shield_position = sto_position.get_mut(shield_id).unwrap();
+			let shield_direction = sto_direction.get_mut(shield_id).unwrap();
+			let shield_collider = sto_rectangle_collider.get_mut(shield_id).unwrap();
+
+			// Update shield direction, position, and collider.
+			*shield_direction = bearer_direction;
+			*shield_position = Shield::compute_position(&bearer_position, &bearer_direction, &bearer_collider);
+			*shield_collider = Shield::compute_collider(&bearer_direction);
 		}
 	}
 }

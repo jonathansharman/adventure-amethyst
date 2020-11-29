@@ -20,7 +20,6 @@ impl<'a> System<'a> for Death {
 	);
 
 	fn run(&mut self, (entities, mut sto_entity_removal, sto_health): Self::SystemData) {
-		log::info!("Death");
 		// Kill entities with zero health.
 		for (id, health) in (&entities, &sto_health).join() {
 			if health.current() == 0 {

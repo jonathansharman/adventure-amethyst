@@ -17,6 +17,7 @@ pub struct Textures {
 	pub terrain: Handle<Texture>,
 	pub hearts: Handle<Texture>,
 	pub arrow_attack: Handle<Texture>,
+	pub shield: Handle<Texture>,
 }
 
 impl Textures {
@@ -39,6 +40,7 @@ impl Textures {
 			terrain: load_texture("terrain"),
 			hearts: load_texture("hearts"),
 			arrow_attack: load_texture("arrow_attack"),
+			shield: load_texture("shield"),
 		}
 	}
 }
