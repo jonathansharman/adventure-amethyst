@@ -1,5 +1,6 @@
 use crate::{
 	component::{
+		ArrowAttack,
 		collider::RectangleCollider,
 		Direction,
 		Faction,
@@ -12,7 +13,7 @@ use crate::{
 
 use amethyst::{
 	derive::SystemDesc,
-	ecs::{Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
 };
 
 /// Does collision detection and response for characters.
@@ -22,19 +23,40 @@ pub struct StaticCollisionDetection;
 impl<'a> System<'a> for StaticCollisionDetection {
 	type SystemData = (
 		ReadExpect<'a, CurrentRegion>,
+		Entities<'a>,
 		ReadStorage<'a, Faction>,
 		ReadStorage<'a, RectangleCollider>,
 		ReadStorage<'a, Terrain>,
 		WriteStorage<'a, Position>,
+		ReadStorage<'a, ArrowAttack>,
 	);
 
 	fn run(&mut self, (
 		current_region,
+		entities,
 		sto_faction,
 		sto_rectangle_collider,
 		sto_terrain,
 		mut sto_position,
+		sto_arrow_attack,
 	): Self::SystemData) {
+		// Determines if the tile containing (x, y) is a wall.
+		let is_wall = |x, y| {
+			current_region.get().terrain_at_position(&sto_terrain, Position { x, y })
+				.map_or(false, |terrain| terrain.blocks_movement())
+		};
+		// Retrieves the bottom-left and upper-right corners of the given collider and position.
+		let get_low_high = |collider: &RectangleCollider, position: &Position| {
+			let low = Position {
+				x: position.x - collider.half_width,
+				y: position.y - collider.half_height,
+			};
+			let high = Position {
+				x: position.x + collider.half_width,
+				y: position.y + collider.half_height,
+			};
+			(low, high)
+		};
 		// Push characters out of obstacles.
 		for (_faction, collider, position) in (
 			&sto_faction,
@@ -50,22 +72,9 @@ impl<'a> System<'a> for StaticCollisionDetection {
 				x: TILE_SIZE * ((position.x / TILE_SIZE).floor() + 0.5),
 				y: TILE_SIZE * ((position.y / TILE_SIZE).ceil() - 0.5),
 			};
-			// The position of the collider's bottom-left corner.
-			let low = Position {
-				x: position.x - collider.half_width,
-				y: position.y - collider.half_height,
-			};
-			// The position of the collider's upper-right corner.
-			let high = Position {
-				x: position.x + collider.half_width,
-				y: position.y + collider.half_height,
-			};
+			let (low, high) = get_low_high(&collider, &position);
 
 			// Detect collisions with the surrounding walls in each diagonal direction.
-			let is_wall = |x, y| {
-				current_region.get().terrain_at_position(&sto_terrain, Position { x, y })
-					.map_or(false, |terrain| terrain.blocks_movement())
-			};
 			let bottom_left = is_wall(low.x, low.y);
 			let bottom_right = is_wall(high.x, low.y);
 			let top_left = is_wall(low.x, high.y);
@@ -160,6 +169,27 @@ impl<'a> System<'a> for StaticCollisionDetection {
 					Direction::Right => position.x = snap.x + collider.half_width,
 					Direction::Left => position.x = snap.x - collider.half_width,
 				};
+			}
+		}
+		// Destroy arrows that hit obstacles.
+		'arrow_destruction: for (arrow_attack_id, _arrow_attack, collider, position) in (
+			&entities,
+			&sto_arrow_attack,
+			&sto_rectangle_collider,
+			&sto_position,
+		).join() {
+			let (low, high) = get_low_high(&collider, &position);
+			let x_steps = ((high.x - low.x) / TILE_SIZE).ceil() as i32;
+			let y_steps = ((high.y - low.y) / TILE_SIZE).ceil() as i32;
+			for x_step in 0..=x_steps {
+				let x = low.x + (x_step as f32 * TILE_SIZE).min(high.x - low.x);
+				for y_step in 0..=y_steps {
+					let y = low.y + (y_step as f32 * TILE_SIZE).min(high.y - low.y);
+					if is_wall(x, y) {
+						entities.delete(arrow_attack_id).unwrap();
+						continue 'arrow_destruction;
+					}
+				}
 			}
 		}
 	}
