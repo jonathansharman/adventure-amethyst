@@ -5,11 +5,10 @@ use crate::component::{
 
 use amethyst::{
 	core::{
-		timing::Time,
 		Transform,
 	},
 	derive::SystemDesc,
-	ecs::{Entities, Join, Read, ReadStorage, System, SystemData, WriteStorage},
+	ecs::{Entities, Join, ReadStorage, System, SystemData, WriteStorage},
 	renderer::SpriteRender,
 };
 use nalgebra::base::Vector3;
@@ -26,7 +25,6 @@ impl<'a> System<'a> for Animation {
 		ReadStorage<'a, Direction>,
 		WriteStorage<'a, SpriteRender>,
 		WriteStorage<'a, Transform>,
-		Read<'a, Time>,
 	);
 
 	fn run(&mut self, (
@@ -36,7 +34,6 @@ impl<'a> System<'a> for Animation {
 		sto_direction,
 		mut sto_sprite_render,
 		mut sto_transform,
-		time,
 	): Self::SystemData) {
 		for (id, animation, position, direction) in (
 			&entities,
@@ -45,7 +42,7 @@ impl<'a> System<'a> for Animation {
 			&sto_direction,
 		).join() {
 			// Update animation.
-			animation.advance(time.delta_time());
+			animation.advance();
 			animation.set_direction(*direction);
 			// Set transform according to position.
 			let mut transform = Transform::default();

@@ -7,8 +7,6 @@ use amethyst::{
 };
 use serde::Deserialize;
 
-use std::time::Duration;
-
 impl Component for Animation {
 	type Storage = DenseVecStorage<Self>;
 }
@@ -18,7 +16,7 @@ pub struct Animation {
 	sprite_sheet: Handle<SpriteSheet>,
 	frames: Vec<Frame>,
 	frame_number: usize,
-	frame_progress: Duration,
+	frame_progress: u32,
 	direction: Direction,
 }
 
@@ -28,7 +26,7 @@ impl Animation {
 			sprite_sheet,
 			frames,
 			frame_number: 0,
-			frame_progress: Duration::from_secs(0),
+			frame_progress: 0,
 			direction: Direction::Up,
 		}
 	}
@@ -47,11 +45,14 @@ impl Animation {
 		}
 	}
 
-	pub fn advance(&mut self, elapsed_time: Duration) {
-		self.frame_progress += elapsed_time;
-		while self.frame_progress >= self.frames[self.frame_number].duration {
-			self.frame_progress -= self.frames[self.frame_number].duration;
-			self.frame_number = (self.frame_number + 1) % self.frames.len();
+	/// Advances the animation by one game frame.
+	pub fn advance(&mut self) {
+		if let Some(frame_duration) = self.frames[self.frame_number].duration {
+			self.frame_progress += 1;
+			if self.frame_progress == frame_duration {
+				self.frame_progress = 0;
+				self.frame_number = (self.frame_number + 1) % self.frames.len();
+			}
 		}
 	}
 
@@ -70,5 +71,6 @@ pub struct Frame {
 	pub left: usize,
 	/// Sprite number for the right direction.
 	pub right: usize,
-	pub duration: Duration,
+	/// Duration of this animation frame, in game frames. If `None`, the animation stops on this frame.
+	pub duration: Option<u32>,
 }

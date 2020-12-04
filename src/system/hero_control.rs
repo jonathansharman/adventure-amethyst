@@ -27,7 +27,6 @@ use amethyst::{
 };
 
 use std::convert::TryFrom;
-use std::time::Duration;
 
 /// Controls the hero character based on player input.
 #[derive(SystemDesc)]
@@ -161,7 +160,7 @@ impl<'a> System<'a> for HeroControl {
 									down: 1,
 									left: 2,
 									right: 3,
-									duration: Duration::from_secs(1),
+									duration: None,
 								},
 							));
 							let thrust_attack_id = entities
@@ -190,7 +189,7 @@ impl<'a> System<'a> for HeroControl {
 									down: 1,
 									left: 2,
 									right: 3,
-									duration: Duration::from_secs(1),
+									duration: None,
 								},
 							));
 							let slash_attack_id = entities

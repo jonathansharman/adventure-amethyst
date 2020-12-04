@@ -23,8 +23,6 @@ use amethyst::{
 };
 use rand::Rng;
 
-use std::time::Duration;
-
 /// Controls the hero character based on player input.
 #[derive(SystemDesc)]
 pub struct EnemyControl;
@@ -123,7 +121,7 @@ impl<'a> System<'a> for EnemyControl {
 							down: 1,
 							left: 2,
 							right: 3,
-							duration: Duration::from_secs(1),
+							duration: None,
 						},
 					)), &mut sto_animation)
 					.build();

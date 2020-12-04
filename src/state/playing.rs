@@ -48,7 +48,6 @@ use rand::Rng;
 use ron::de::from_reader;
 
 use std::fs::File;
-use std::time::Duration;
 
 /// The main gameplay state.
 pub struct Playing<'a, 'b> {
@@ -132,7 +131,7 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 					down: 1,
 					left: 2,
 					right: 3,
-					duration: Duration::from_secs(1),
+					duration: None,
 				},
 			)))
 			.build();
@@ -151,7 +150,7 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 					down: 1,
 					left: 2,
 					right: 3,
-					duration: Duration::from_secs(1),
+					duration: None,
 				},
 			)))
 			.build();
@@ -290,7 +289,7 @@ fn load_region(filename: &str, world: &mut World) {
 					down: 1,
 					left: 2,
 					right: 3,
-					duration: Duration::from_secs(1),
+					duration: None,
 				},
 			)))
 			.build();
@@ -317,7 +316,7 @@ fn load_region(filename: &str, world: &mut World) {
 					down: 1,
 					left: 1,
 					right: 1,
-					duration: Duration::from_secs(1),
+					duration: None,
 				},
 			)))
 			.build();
