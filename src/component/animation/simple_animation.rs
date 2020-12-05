@@ -1,5 +1,3 @@
-use crate::component::Direction;
-
 use amethyst::{
 	assets::Handle,
 	ecs::{Component, DenseVecStorage},
@@ -7,41 +5,34 @@ use amethyst::{
 };
 use serde::Deserialize;
 
-impl Component for Animation {
+/// A basic animation. See also `DirectionalAnimation`.
+#[derive(PartialEq, Clone, Debug)]
+pub struct SimpleAnimation {
+	sprite_sheet: Handle<SpriteSheet>,
+	frames: Vec<SimpleFrame>,
+	frame_number: usize,
+	frame_progress: u32,
+}
+
+impl Component for SimpleAnimation {
 	type Storage = DenseVecStorage<Self>;
 }
 
-#[derive(PartialEq, Clone, Debug)]
-pub struct Animation {
-	sprite_sheet: Handle<SpriteSheet>,
-	frames: Vec<Frame>,
-	frame_number: usize,
-	frame_progress: u32,
-	direction: Direction,
-}
-
-impl Animation {
-	pub fn new(sprite_sheet: Handle<SpriteSheet>, frames: Vec<Frame>) -> Animation {
-		Animation {
+impl SimpleAnimation {
+	pub fn new(sprite_sheet: Handle<SpriteSheet>, frames: Vec<SimpleFrame>) -> Self {
+		Self {
 			sprite_sheet,
 			frames,
 			frame_number: 0,
 			frame_progress: 0,
-			direction: Direction::Up,
 		}
 	}
 
 	pub fn current_sprite_render(&self) -> SpriteRender {
 		let frame = self.frames[self.frame_number];
-		let sprite_number = match self.direction {
-			Direction::Up => frame.up,
-			Direction::Down => frame.down,
-			Direction::Left => frame.left,
-			Direction::Right => frame.right,
-		};
 		SpriteRender {
 			sprite_sheet: self.sprite_sheet.clone(),
-			sprite_number,
+			sprite_number: frame.sprite_number,
 		}
 	}
 
@@ -55,22 +46,11 @@ impl Animation {
 			}
 		}
 	}
-
-	pub fn set_direction(&mut self, direction: Direction) {
-		self.direction = direction;
-	}
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug, Deserialize)]
-pub struct Frame {
-	/// Sprite number for the up direction.
-	pub up: usize,
-	/// Sprite number for the down direction.
-	pub down: usize,
-	/// Sprite number for the left direction.
-	pub left: usize,
-	/// Sprite number for the right direction.
-	pub right: usize,
+pub struct SimpleFrame {
+	pub sprite_number: usize,
 	/// Duration of this animation frame, in game frames. If `None`, the animation stops on this frame.
 	pub duration: Option<u32>,
 }

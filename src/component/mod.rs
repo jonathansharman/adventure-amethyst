@@ -1,4 +1,4 @@
-mod animation;
+pub mod animation;
 mod arrow_attack;
 pub mod behavior;
 pub mod collider;
@@ -18,7 +18,6 @@ mod terrain;
 mod thrust_attack;
 mod velocity;
 
-pub use animation::{Animation, Frame};
 pub use arrow_attack::ArrowAttack;
 pub use direction::Direction;
 pub use enemy::Enemy;

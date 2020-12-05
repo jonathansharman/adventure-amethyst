@@ -1,9 +1,8 @@
 use crate::{
 	component::{
-		Animation,
+		animation::{DirectionalAnimation, DirectionalFrame},
 		collider::{HalfDiskCollider, RectangleCollider},
 		Direction,
-		Frame,
 		Hero,
 		HeroState,
 		KnockedBack,
@@ -58,7 +57,7 @@ impl<'a> System<'a> for HeroControl {
 		WriteStorage<'a, ThrustAttack>,
 		WriteStorage<'a, RectangleCollider>,
 		WriteStorage<'a, HalfDiskCollider>,
-		WriteStorage<'a, Animation>,
+		WriteStorage<'a, DirectionalAnimation>,
 	);
 
 	fn run(&mut self, (
@@ -76,7 +75,7 @@ impl<'a> System<'a> for HeroControl {
 		mut sto_thrust_attack,
 		mut sto_rectangle_collider,
 		mut sto_disk_arc_collider,
-		mut sto_animation,
+		mut sto_directional_animation,
 	): Self::SystemData) {
 		// Tuning parameters
 		const ORTHOGONAL_SPEED: f32 = 5.0;
@@ -154,15 +153,16 @@ impl<'a> System<'a> for HeroControl {
 						};
 						if advancing {
 							// Hero is advancing -> thrust attack.
-							let thrust_attack_animation = Animation::new(sprite_sheets.thrust_attack.clone(), vec!(
-								Frame {
+							let thrust_attack_animation = DirectionalAnimation::new(
+								sprite_sheets.thrust_attack.clone(),
+								vec!(DirectionalFrame {
 									up: 0,
 									down: 1,
 									left: 2,
 									right: 3,
 									duration: None,
-								},
-							));
+								}),
+							);
 							let thrust_attack_id = entities
 								.build_entity()
 								.with(ThrustAttack::new(hero_id), &mut sto_thrust_attack)
@@ -171,7 +171,7 @@ impl<'a> System<'a> for HeroControl {
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(ThrustAttack::compute_collider(&hero_direction), &mut sto_rectangle_collider)
-								.with(thrust_attack_animation, &mut sto_animation)
+								.with(thrust_attack_animation, &mut sto_directional_animation)
 								.build();
 							hero.state = HeroState::Thrusting {
 								thrust_attack_id: thrust_attack_id,
@@ -183,15 +183,16 @@ impl<'a> System<'a> for HeroControl {
 								radius: SLASH_ATTACK_RADIUS,
 								direction: hero_direction,
 							};
-							let slash_attack_animation = Animation::new(sprite_sheets.slash_attack.clone(), vec!(
-								Frame {
+							let slash_attack_animation = DirectionalAnimation::new(
+								sprite_sheets.slash_attack.clone(),
+								vec!(DirectionalFrame {
 									up: 0,
 									down: 1,
 									left: 2,
 									right: 3,
 									duration: None,
-								},
-							));
+								}),
+							);
 							let slash_attack_id = entities
 								.build_entity()
 								.with(SlashAttack::new(hero_id), &mut sto_slash_attack)
@@ -200,7 +201,7 @@ impl<'a> System<'a> for HeroControl {
 								.with(hero_position, &mut sto_position)
 								.with(hero_direction, &mut sto_direction)
 								.with(slash_attack_collider, &mut sto_disk_arc_collider)
-								.with(slash_attack_animation, &mut sto_animation)
+								.with(slash_attack_animation, &mut sto_directional_animation)
 								.build();
 							hero.state = HeroState::Slashing {
 								slash_attack_id,

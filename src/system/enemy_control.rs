@@ -1,12 +1,11 @@
 use crate::{
 	component::{
-		Animation,
+		animation::{DirectionalAnimation, DirectionalFrame},
 		ArrowAttack,
 		behavior::{ShootArrows, ShouldShootArrow, Wander},
 		collider::RectangleCollider,
 		Direction,
 		Faction,
-		Frame,
 		KnockedBack,
 		Position,
 		removal::TiedToRegion,
@@ -40,7 +39,7 @@ impl<'a> System<'a> for EnemyControl {
 		WriteStorage<'a, Velocity>,
 		WriteStorage<'a, RectangleCollider>,
 		WriteStorage<'a, ArrowAttack>,
-		WriteStorage<'a, Animation>,
+		WriteStorage<'a, DirectionalAnimation>,
 	);
 
 	fn run(&mut self, (
@@ -55,7 +54,7 @@ impl<'a> System<'a> for EnemyControl {
 		mut sto_velocity,
 		mut sto_rectangle_collider,
 		mut sto_arrow_attack,
-		mut sto_animation,
+		mut sto_directional_animation,
 	): Self::SystemData) {
 		const SPEED: f32 = 3.0;
 		const TURN_THRESHOLD: f32 = 0.01;
@@ -115,15 +114,16 @@ impl<'a> System<'a> for EnemyControl {
 					.with(velocity, &mut sto_velocity)
 					.with(direction, &mut sto_direction)
 					.with(collider, &mut sto_rectangle_collider)
-					.with(Animation::new(sprite_sheets.arrow_attack.clone(), vec!(
-						Frame {
+					.with(DirectionalAnimation::new(
+						sprite_sheets.arrow_attack.clone(),
+						vec!(DirectionalFrame {
 							up: 0,
 							down: 1,
 							left: 2,
 							right: 3,
 							duration: None,
-						},
-					)), &mut sto_animation)
+						}),
+					), &mut sto_directional_animation)
 					.build();
 			}
 		}

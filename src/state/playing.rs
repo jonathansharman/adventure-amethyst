@@ -1,12 +1,11 @@
 use crate::{
 	component::{
-		Animation,
+		animation::{DirectionalAnimation, DirectionalFrame, SimpleAnimation, SimpleFrame},
 		behavior::{ShootArrows, Wander},
 		collider::RectangleCollider,
 		Direction,
 		Enemy,
 		Faction,
-		Frame,
 		Health,
 		Heart,
 		Hero,
@@ -125,15 +124,16 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 			.with(Velocity::default())
 			.with(hero_direction)
 			.with(hero_collider)
-			.with(Animation::new(hero_sprite_sheet, vec!(
-				Frame {
+			.with(DirectionalAnimation::new(
+				hero_sprite_sheet,
+				vec!(DirectionalFrame {
 					up: 0,
 					down: 1,
 					left: 2,
 					right: 3,
 					duration: None,
-				},
-			)))
+				}),
+			))
 			.build();
 		// Create hero's shield.
 		let shield_sprite_sheet = world.read_resource::<SpriteSheets>().shield.clone();
@@ -144,15 +144,16 @@ impl<'a, 'b> SimpleState for Playing<'a, 'b> {
 			.with(shield_position)
 			.with(hero_direction)
 			.with(shield_collider)
-			.with(Animation::new(shield_sprite_sheet, vec!(
-				Frame {
+			.with(DirectionalAnimation::new(
+				shield_sprite_sheet,
+				vec!(DirectionalFrame {
 					up: 0,
 					down: 1,
 					left: 2,
 					right: 3,
 					duration: None,
-				},
-			)))
+				}),
+			))
 			.build();
 
 		// Load starting region.
@@ -283,15 +284,16 @@ fn load_region(filename: &str, world: &mut World) {
 			.with(Velocity::default())
 			.with(Direction::Down)
 			.with(enemy_collider)
-			.with(Animation::new(enemy_sprite_sheet, vec!(
-				Frame {
+			.with(DirectionalAnimation::new(
+				enemy_sprite_sheet,
+				vec!(DirectionalFrame {
 					up: 0,
 					down: 1,
 					left: 2,
 					right: 3,
 					duration: None,
-				},
-			)))
+				}),
+			))
 			.build();
 	}
 
@@ -310,12 +312,9 @@ fn load_region(filename: &str, world: &mut World) {
 			.with(heart_position)
 			.with(Direction::Down)
 			.with(heart_collider)
-			.with(Animation::new(heart_sprite_sheet, vec!(
-				Frame {
-					up: 1,
-					down: 1,
-					left: 1,
-					right: 1,
+			.with(SimpleAnimation::new(heart_sprite_sheet, vec!(
+				SimpleFrame {
+					sprite_number: 1,
 					duration: None,
 				},
 			)))
